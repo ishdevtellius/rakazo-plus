@@ -3,6 +3,7 @@ import type { OAuthMaterial } from "./mcp-oauth.js";
 import {
   McpOAuthBroker,
   McpReauthorizationRequiredError,
+  NO_ONE_CLICK_SIGNIN_MESSAGE,
   StoredMcpOAuthProvider,
 } from "./mcp-oauth.js";
 
@@ -84,6 +85,7 @@ function chunkedBody(totalBytes: number, chunkBytes: number): ReadableStream<Uin
 async function rejectedOAuthBegin(
   register: () => Response | Promise<Response>,
   secret?: string,
+  withRegistration = true,
 ): Promise<Error> {
   vi.stubGlobal(
     "fetch",
@@ -111,7 +113,7 @@ async function rejectedOAuthBegin(
           issuer: "https://auth.example.test",
           authorization_endpoint: "https://auth.example.test/authorize",
           token_endpoint: "https://auth.example.test/token",
-          registration_endpoint: "https://auth.example.test/register",
+          ...(withRegistration ? { registration_endpoint: "https://auth.example.test/register" } : {}),
           response_types_supported: ["code"],
           grant_types_supported: ["authorization_code", "refresh_token"],
           code_challenge_methods_supported: ["S256"],
@@ -877,6 +879,13 @@ describe("MCP OAuth", () => {
     expect(tracked.bytesRead()).toBeLessThan(totalBytes);
     expect(error.message).toBe("Could not start MCP OAuth");
     expect(error.message).not.toContain("a".repeat(300));
+  });
+
+  it("tells the user to use an access token when the provider offers no client registration", async () => {
+    const error = await rejectedOAuthBegin(() => new Response("unused", { status: 500 }), undefined, false);
+
+    expect(error.message).toBe(NO_ONE_CLICK_SIGNIN_MESSAGE);
+    expect(error.message).not.toContain("registration_endpoint");
   });
 
   it("does not read an OAuth error body whose declared length exceeds the cap", async () => {

@@ -118,7 +118,14 @@ export function IntegrationSetup({
       if (existing && apiKey.trim()) {
         await rpc.mcp.servers.update({ id: existing.id, secret: apiKey.trim() });
       }
-      const result = await connectMcpOauth(server.id);
+      let result: Awaited<ReturnType<typeof connectMcpOauth>>;
+      try {
+        result = await connectMcpOauth(server.id);
+      } catch (err) {
+        // A server created just for this attempt would otherwise stay behind, unconnected, and be reused on every retry.
+        if (!existing) await rpc.mcp.servers.remove({ id: server.id }).catch(() => undefined);
+        throw err;
+      }
       if (result === "cancelled") return;
       if (botId) await rpc.mcp.assignments.approve({ botId, serverId: server.id });
       setConnected((current) => [...current, url]);

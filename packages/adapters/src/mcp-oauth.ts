@@ -458,10 +458,19 @@ function oauthFetch(
       const sdk = sanitizeConnectorError(error, secrets);
       const surfaced = rejection ? formatOAuthRejection(rejection, sdk, secrets) : undefined;
       getLogger().warn(`${message}: ${surfaced ?? sdk}`);
+      // The SDK reports this when the provider's auth server offers no client registration (GitHub's does not). The
+      // user can still connect with an access token, so say so instead of a generic failure.
+      if (!surfaced && /does not support dynamic client registration/i.test(sdk)) {
+        return new Error(NO_ONE_CLICK_SIGNIN_MESSAGE);
+      }
       return new Error(surfaced ? `${message}: ${surfaced}` : message);
     },
   };
 }
+
+/** Safe to show users: it names no provider detail. Matched by the web app to remove a server that could never connect. */
+export const NO_ONE_CLICK_SIGNIN_MESSAGE =
+  "This service does not support one-click sign-in. Add it under MCP servers with an access token instead.";
 
 type OAuthRejection = { status: number; code: string; description: string };
 
