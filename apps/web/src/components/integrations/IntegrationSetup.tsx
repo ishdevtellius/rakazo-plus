@@ -1,5 +1,6 @@
 import { Trans, useLingui } from "@lingui/react/macro";
 import type { IntegrationCatalogResult, IntegrationSetupState } from "@rakazo/contracts";
+import { NO_ONE_CLICK_SIGNIN_MESSAGE } from "@rakazo/contracts";
 import { Button, Input } from "@rakazo/ui-web";
 import { Check } from "lucide-react";
 import { useEffect, useId, useState } from "react";
@@ -41,6 +42,12 @@ export function IntegrationSetup({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [connected, setConnected] = useState<string[]>([]);
+  // A provider without dynamic client registration (GitHub): the user signs in through their own OAuth app instead.
+  const [ownApp, setOwnApp] = useState<{ serverId: string; name: string; url: string } | null>(
+    null,
+  );
+  const [ownClientId, setOwnClientId] = useState("");
+  const [ownClientSecret, setOwnClientSecret] = useState("");
   const choices: { id: Choice; label: string }[] = [
     { id: "direct", label: t`Direct MCP` },
     { id: "composio", label: "Composio" },
@@ -122,14 +129,37 @@ export function IntegrationSetup({
       try {
         result = await connectMcpOauth(server.id);
       } catch (err) {
+        if (err instanceof Error && err.message === NO_ONE_CLICK_SIGNIN_MESSAGE) {
+          setOwnApp({ serverId: server.id, name, url });
+          throw err;
+        }
         // A server created just for this attempt would otherwise stay behind, unconnected, and be reused on every retry.
         if (!existing) await rpc.mcp.servers.remove({ id: server.id }).catch(() => undefined);
         throw err;
       }
+      setOwnApp(null);
       if (result === "cancelled") return;
       if (botId) await rpc.mcp.assignments.approve({ botId, serverId: server.id });
       setConnected((current) => [...current, url]);
       onServerConnected?.(server.id);
+    });
+  }
+
+  async function connectWithOwnApp() {
+    if (!ownApp) return;
+    await run(async () => {
+      await rpc.mcp.oauth.setClient({
+        serverId: ownApp.serverId,
+        clientId: ownClientId.trim(),
+        ...(ownClientSecret.trim() ? { clientSecret: ownClientSecret.trim() } : {}),
+      });
+      const result = await connectMcpOauth(ownApp.serverId);
+      if (result === "cancelled") return;
+      if (botId) await rpc.mcp.assignments.approve({ botId, serverId: ownApp.serverId });
+      setConnected((current) => [...current, ownApp.url]);
+      onServerConnected?.(ownApp.serverId);
+      setOwnApp(null);
+      setOwnClientSecret("");
     });
   }
 
@@ -351,6 +381,44 @@ export function IntegrationSetup({
         <p role="alert" className="text-sm text-destructive">
           {error}
         </p>
+      ) : null}
+      {ownApp ? (
+        <div className="space-y-3 rounded-xl border border-border p-4 text-sm">
+          <p className="font-medium text-foreground">
+            <Trans>Sign in to {ownApp.name} with your own OAuth app</Trans>
+          </p>
+          <p className="text-muted-foreground">
+            <Trans>
+              Create an OAuth app with the provider and set its callback URL to{" "}
+              <code>{`${window.location.origin}/mcp/oauth/callback`}</code>, then paste its client
+              ID here. You will sign in through the provider's own page.
+            </Trans>
+          </p>
+          <label htmlFor={`${fieldId}-own-id`} className="block">
+            <Trans>Client ID</Trans>
+            <Input
+              id={`${fieldId}-own-id`}
+              className="mt-2"
+              value={ownClientId}
+              onChange={(event) => setOwnClientId(event.target.value)}
+              autoComplete="off"
+            />
+          </label>
+          <label htmlFor={`${fieldId}-own-secret`} className="block">
+            <Trans>Client secret (if the provider gave you one)</Trans>
+            <Input
+              id={`${fieldId}-own-secret`}
+              className="mt-2"
+              value={ownClientSecret}
+              onChange={(event) => setOwnClientSecret(event.target.value)}
+              type="password"
+              autoComplete="new-password"
+            />
+          </label>
+          <Button disabled={busy || !ownClientId.trim()} onClick={() => void connectWithOwnApp()}>
+            <Trans>Save and sign in</Trans>
+          </Button>
+        </div>
       ) : null}
       {onDone ? (
         <div className="flex gap-3">

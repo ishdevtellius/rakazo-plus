@@ -1,5 +1,9 @@
 import * as z from "zod";
 
+/** Shown when a provider's auth server offers no client registration (GitHub): the user brings their own OAuth app or a token. */
+export const NO_ONE_CLICK_SIGNIN_MESSAGE =
+  "This service does not support one-click sign-in. Add it under MCP servers with an access token, or sign in with your own OAuth app.";
+
 export const McpTransportSchema = z.enum(["streamable_http", "sse", "stdio"]);
 export type McpTransport = z.infer<typeof McpTransportSchema>;
 

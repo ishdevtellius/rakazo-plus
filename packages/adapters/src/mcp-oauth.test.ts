@@ -113,7 +113,9 @@ async function rejectedOAuthBegin(
           issuer: "https://auth.example.test",
           authorization_endpoint: "https://auth.example.test/authorize",
           token_endpoint: "https://auth.example.test/token",
-          ...(withRegistration ? { registration_endpoint: "https://auth.example.test/register" } : {}),
+          ...(withRegistration
+            ? { registration_endpoint: "https://auth.example.test/register" }
+            : {}),
           response_types_supported: ["code"],
           grant_types_supported: ["authorization_code", "refresh_token"],
           code_challenge_methods_supported: ["S256"],
@@ -881,8 +883,179 @@ describe("MCP OAuth", () => {
     expect(error.message).not.toContain("a".repeat(300));
   });
 
+  it("keeps the user's own OAuth app through resets, and still drops a registered client", async () => {
+    const make = (preregistered: boolean) =>
+      new StoredMcpOAuthProvider(
+        "server-1",
+        {
+          oauth: {
+            redirectUri: "http://127.0.0.1:5173/mcp/oauth/callback",
+            clientInformation: { client_id: "own-app", client_secret: "shh" },
+            ...(preregistered ? { preregistered: true } : {}),
+          },
+        },
+        async () => undefined,
+      );
+    const own = make(true);
+    await own.invalidateCredentials("client");
+    expect(own.clientInformation()).toEqual({ client_id: "own-app", client_secret: "shh" });
+    await own.invalidateCredentials("all");
+    expect(own.clientInformation()).toEqual({ client_id: "own-app", client_secret: "shh" });
+    const registered = make(false);
+    await registered.invalidateCredentials("client");
+    expect(registered.clientInformation()).toBeUndefined();
+  });
+
+  it("signs in with the user's own OAuth app when the provider has no registration endpoint", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async (input: string | URL | Request, init?: RequestInit) => {
+        const request = input instanceof Request ? input : new Request(input, init);
+        const url = logicalHref(input, init);
+        if (url === "https://mcp.example.test/mcp" && request.method === "POST") {
+          return new Response("missing bearer token", {
+            status: 401,
+            headers: {
+              "content-type": "text/plain",
+              "WWW-Authenticate":
+                'Bearer resource_metadata="https://mcp.example.test/.well-known/oauth-protected-resource/mcp"',
+            },
+          });
+        }
+        if (url === "https://mcp.example.test/.well-known/oauth-protected-resource/mcp") {
+          return Response.json({
+            resource: "https://mcp.example.test/mcp",
+            authorization_servers: ["https://auth.example.test"],
+          });
+        }
+        if (url === "https://auth.example.test/.well-known/oauth-authorization-server") {
+          return Response.json({
+            issuer: "https://auth.example.test",
+            authorization_endpoint: "https://auth.example.test/authorize",
+            token_endpoint: "https://auth.example.test/token",
+            response_types_supported: ["code"],
+            grant_types_supported: ["authorization_code", "refresh_token"],
+            code_challenge_methods_supported: ["S256"],
+          });
+        }
+        throw new Error(`Unexpected request: ${request.method} ${url}`);
+      }),
+    );
+    const stored = JSON.stringify({
+      oauth: { clientInformation: { client_id: "my-own-app" }, preregistered: true },
+    });
+    const tx = {
+      $executeRaw: vi.fn().mockResolvedValue(1),
+      $queryRaw: vi.fn().mockResolvedValue([]),
+      mcpServer: {
+        findFirst: vi
+          .fn()
+          .mockResolvedValue({ endpoint: "https://mcp.example.test/mcp", secretId: "secret-1" }),
+        update: vi.fn().mockResolvedValue({}),
+      },
+      secret: {
+        findFirst: vi.fn().mockResolvedValue({ id: "secret-1", ciphertext: "encrypted" }),
+        create: vi.fn().mockResolvedValue({}),
+        deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
+    };
+    const prisma = {
+      mcpServer: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: "server-1",
+          endpoint: "https://mcp.example.test/mcp",
+          secretId: "secret-1",
+        }),
+      },
+      secret: {
+        findFirst: vi.fn().mockResolvedValue({ id: "secret-1", ciphertext: "encrypted" }),
+        create: vi.fn(),
+        deleteMany: vi.fn(),
+      },
+      mcpOAuthSession: oauthSessionStore(),
+      $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
+    };
+    const broker = new McpOAuthBroker(
+      prisma as never,
+      {
+        load: vi.fn(() => stored),
+        put: vi.fn(async () => ({ id: "secret-1", ciphertext: "encrypted" })),
+      } as never,
+      TEST_NETWORK,
+    );
+
+    const started = await broker.begin({
+      serverId: "server-1",
+      spaceId: "workspace-1",
+      userId: "user-1",
+      redirectUri: "http://127.0.0.1:5173/mcp/oauth/callback",
+    });
+
+    expect(started.status).toBe("authorization_required");
+    if (started.status !== "authorization_required") throw new Error("OAuth was not requested");
+    const url = new URL(started.authorizationUrl);
+    expect(url.origin + url.pathname).toBe("https://auth.example.test/authorize");
+    expect(url.searchParams.get("client_id")).toBe("my-own-app");
+    expect(url.searchParams.get("code_challenge_method")).toBe("S256");
+  });
+
+  it("stores a user-supplied OAuth client for a server", async () => {
+    const payloads: string[] = [];
+    const put = vi.fn(async (plaintext: string) => {
+      payloads.push(plaintext);
+      return { id: "secret-9", ciphertext: "encrypted-9" };
+    });
+    const tx = {
+      $executeRaw: vi.fn().mockResolvedValue(1),
+      $queryRaw: vi.fn().mockResolvedValue([]),
+      mcpServer: {
+        findFirst: vi
+          .fn()
+          .mockResolvedValue({ endpoint: "https://mcp.example.test/mcp", secretId: null }),
+        update: vi.fn().mockResolvedValue({}),
+      },
+      secret: {
+        findFirst: vi.fn(),
+        create: vi.fn().mockResolvedValue({}),
+        deleteMany: vi.fn().mockResolvedValue({ count: 1 }),
+      },
+    };
+    const prisma = {
+      mcpServer: {
+        findFirst: vi
+          .fn()
+          .mockResolvedValue({
+            id: "server-1",
+            endpoint: "https://mcp.example.test/mcp",
+            secretId: null,
+          }),
+      },
+      secret: { findFirst: vi.fn(), create: vi.fn(), deleteMany: vi.fn() },
+      mcpOAuthSession: oauthSessionStore(),
+      $transaction: vi.fn(async (callback: (client: typeof tx) => unknown) => callback(tx)),
+    };
+    const broker = new McpOAuthBroker(prisma as never, { put } as never, TEST_NETWORK);
+
+    await broker.setClient({
+      serverId: "server-1",
+      spaceId: "workspace-1",
+      userId: "user-1",
+      clientId: "Iv1.abc",
+      clientSecret: "s3cret",
+    });
+
+    expect(JSON.parse(payloads.at(-1) ?? "{}").oauth).toEqual({
+      clientInformation: { client_id: "Iv1.abc", client_secret: "s3cret" },
+      preregistered: true,
+    });
+  });
+
   it("tells the user to use an access token when the provider offers no client registration", async () => {
-    const error = await rejectedOAuthBegin(() => new Response("unused", { status: 500 }), undefined, false);
+    const error = await rejectedOAuthBegin(
+      () => new Response("unused", { status: 500 }),
+      undefined,
+      false,
+    );
 
     expect(error.message).toBe(NO_ONE_CLICK_SIGNIN_MESSAGE);
     expect(error.message).not.toContain("registration_endpoint");

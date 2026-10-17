@@ -790,6 +790,16 @@ export const appContract = {
         .input(z.object({ sessionId: Id, code: z.string().min(1), state: z.string().min(1) }))
         .output(z.object({ ok: z.literal(true) })),
       disconnect: oc.input(z.object({ serverId: Id })).output(z.object({ ok: z.literal(true) })),
+      /** Save the user's own OAuth app (client id, optional secret) for a server whose provider has no dynamic registration. */
+      setClient: oc
+        .input(
+          z.object({
+            serverId: Id,
+            clientId: z.string().trim().min(1).max(512),
+            clientSecret: z.string().min(1).max(4096).optional(),
+          }),
+        )
+        .output(z.object({ ok: z.literal(true) })),
     },
   },
   onboarding: {

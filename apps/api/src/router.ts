@@ -4769,6 +4769,14 @@ export function createRouter(deps: RouterDeps) {
           });
           return { ok: true as const };
         }),
+        setClient: authed.mcp.oauth.setClient.handler(async ({ context, input }) => {
+          await mcpOAuth.setClient({
+            ...input,
+            spaceId: context.actor.spaceId,
+            userId: context.actor.userId,
+          });
+          return { ok: true as const };
+        }),
       },
     },
     onboarding: {

@@ -14,7 +14,10 @@ import type {
 } from "@modelcontextprotocol/sdk/shared/auth.js";
 import type { SecretStore } from "@rakazo/adapter-kit";
 import { SecretStoreUnavailableError } from "@rakazo/adapter-kit";
-import { isLocalMcpHost } from "@rakazo/contracts";
+import { isLocalMcpHost, NO_ONE_CLICK_SIGNIN_MESSAGE } from "@rakazo/contracts";
+
+export { NO_ONE_CLICK_SIGNIN_MESSAGE };
+
 import { readBoundedResponseBytes } from "@rakazo/core";
 import type { PrismaClient } from "@rakazo/db";
 import { getLogger } from "@rakazo/logging";
@@ -31,6 +34,8 @@ type OAuthState = {
   discoveryState?: OAuthDiscoveryState;
   redirectUri?: string;
   codeVerifier?: string;
+  /** The client id came from the user (their own OAuth app), not from dynamic registration, so it must outlive disconnects and resets. */
+  preregistered?: boolean;
 };
 
 export type OAuthMaterial = {
@@ -352,9 +357,16 @@ export class StoredMcpOAuthProvider implements OAuthClientProvider {
   ): Promise<void> {
     if (scope === "all") {
       const redirectUri = this.redirectUrl;
-      this.material.oauth = redirectUri ? { redirectUri } : undefined;
+      const kept = this.material.oauth?.preregistered
+        ? { clientInformation: this.material.oauth.clientInformation, preregistered: true as const }
+        : {};
+      this.material.oauth =
+        redirectUri || kept.preregistered
+          ? { ...kept, ...(redirectUri ? { redirectUri } : {}) }
+          : undefined;
     } else if (this.material.oauth) {
-      if (scope === "client") delete this.material.oauth.clientInformation;
+      if (scope === "client" && !this.material.oauth.preregistered)
+        delete this.material.oauth.clientInformation;
       if (scope === "tokens") {
         delete this.material.oauth.tokens;
         delete this.material.oauth.obtainedAt;
@@ -467,10 +479,6 @@ function oauthFetch(
     },
   };
 }
-
-/** Safe to show users: it names no provider detail. Matched by the web app to remove a server that could never connect. */
-export const NO_ONE_CLICK_SIGNIN_MESSAGE =
-  "This service does not support one-click sign-in. Add it under MCP servers with an access token instead.";
 
 type OAuthRejection = { status: number; code: string; description: string };
 
@@ -811,7 +819,35 @@ export class McpOAuthBroker {
     });
     if (!row) return;
     const material = await this.read(row.ciphertext, row.id);
-    delete material.oauth;
+    const own = material.oauth?.preregistered
+      ? { clientInformation: material.oauth.clientInformation, preregistered: true as const }
+      : undefined;
+    if (own) material.oauth = own;
+    else delete material.oauth;
+    await this.replaceMaterial(server.id, material, input, true);
+  }
+
+  /** Use the user's own OAuth app for a provider that does not allow dynamic registration (GitHub, Slack, Google...). */
+  async setClient(input: {
+    serverId: string;
+    spaceId: string;
+    userId: string;
+    clientId: string;
+    clientSecret?: string;
+  }): Promise<void> {
+    const server = await this.prisma.mcpServer.findFirst({
+      where: { id: input.serverId, spaceId: input.spaceId, userId: input.userId },
+    });
+    if (!server?.endpoint) throw new Error("MCP server endpoint is required for OAuth");
+    const { material } = await this.loadMaterial(server, input);
+    material.oauth = {
+      // A new client invalidates tokens issued to the old one.
+      clientInformation: {
+        client_id: input.clientId,
+        ...(input.clientSecret ? { client_secret: input.clientSecret } : {}),
+      },
+      preregistered: true,
+    };
     await this.replaceMaterial(server.id, material, input, true);
   }
 
