@@ -1101,6 +1101,10 @@ msgstr "Client ID"
 msgid "Client secret"
 msgstr "Client secret"
 
+#: src/components/integrations/IntegrationSetup.tsx
+msgid "Client secret (if the provider gave you one)"
+msgstr "Client secret (if the provider gave you one)"
+
 #: src/components/ErrorBoundary.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/MessagingSettingsOverlay.tsx
@@ -1858,6 +1862,11 @@ msgstr "Create a section and move {0} into it."
 #: src/pages/Auth.tsx
 msgid "Create account"
 msgstr "Create account"
+
+#. placeholder {0}: window.location.origin
+#: src/components/integrations/IntegrationSetup.tsx
+msgid "Create an OAuth app with the provider and set its callback URL to <0>{0}/mcp/oauth/callback</0>, then paste its client ID here. You will sign in through the provider's own page."
+msgstr "Create an OAuth app with the provider and set its callback URL to <0>{0}/mcp/oauth/callback</0>, then paste its client ID here. You will sign in through the provider's own page."
 
 #: src/pages/GroupPanel.tsx
 msgid "Create group"
@@ -4116,6 +4125,10 @@ msgstr "Runs when this bot receives a verified message from this provider."
 msgid "Save"
 msgstr "Save"
 
+#: src/components/integrations/IntegrationSetup.tsx
+msgid "Save and sign in"
+msgstr "Save and sign in"
+
 #: src/pages/ModelBackupsSettings.tsx
 msgid "Save backups"
 msgstr "Save backups"
@@ -4393,6 +4406,11 @@ msgstr "Sign in"
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Sign in again"
 msgstr "Sign in again"
+
+#. placeholder {0}: ownApp.name
+#: src/components/integrations/IntegrationSetup.tsx
+msgid "Sign in to {0} with your own OAuth app"
+msgstr "Sign in to {0} with your own OAuth app"
 
 #: src/pages/Auth.tsx
 msgid "Sign in to Rakazo"

@@ -1101,6 +1101,10 @@ msgstr ""
 msgid "Client secret"
 msgstr ""
 
+#: src/components/integrations/IntegrationSetup.tsx
+msgid "Client secret (if the provider gave you one)"
+msgstr ""
+
 #: src/components/ErrorBoundary.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/MessagingSettingsOverlay.tsx
@@ -1858,6 +1862,11 @@ msgstr "새 섹션을 만들고 {0}을 옮깁니다."
 #: src/pages/Auth.tsx
 msgid "Create account"
 msgstr "계정 만들기"
+
+#. placeholder {0}: window.location.origin
+#: src/components/integrations/IntegrationSetup.tsx
+msgid "Create an OAuth app with the provider and set its callback URL to <0>{0}/mcp/oauth/callback</0>, then paste its client ID here. You will sign in through the provider's own page."
+msgstr ""
 
 #: src/pages/GroupPanel.tsx
 msgid "Create group"
@@ -4116,6 +4125,10 @@ msgstr ""
 msgid "Save"
 msgstr "저장"
 
+#: src/components/integrations/IntegrationSetup.tsx
+msgid "Save and sign in"
+msgstr ""
+
 #: src/pages/ModelBackupsSettings.tsx
 msgid "Save backups"
 msgstr "백업 모델 저장"
@@ -4392,6 +4405,11 @@ msgstr "로그인"
 #: src/lib/user-error.ts
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Sign in again"
+msgstr ""
+
+#. placeholder {0}: ownApp.name
+#: src/components/integrations/IntegrationSetup.tsx
+msgid "Sign in to {0} with your own OAuth app"
 msgstr ""
 
 #: src/pages/Auth.tsx
