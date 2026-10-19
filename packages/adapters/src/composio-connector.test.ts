@@ -1305,3 +1305,19 @@ describe("Composio during pnpm test", () => {
     vi.unstubAllEnvs();
   });
 });
+
+describe("Composio auth configs", () => {
+  it("parses the toolkit -> auth config map and ignores junk", async () => {
+    const { parseAuthConfigs } = await import("./composio-connector.js");
+    expect(parseAuthConfigs('{"snowflake":"ac_1","bad":3}')).toEqual({ snowflake: "ac_1" });
+    expect(parseAuthConfigs("not json")).toEqual({});
+    expect(parseAuthConfigs(undefined)).toEqual({});
+  });
+
+  it("turns Composio's NoManagedAuth error into setup steps", async () => {
+    const { explainComposioAuthError } = await import("./composio-connector.js");
+    const msg = explainComposioAuthError(new Error('400 {"error":{"slug":"ToolRouterV2_NoManagedAuth","code":4308}}'), "snowflake");
+    expect(msg).toContain("COMPOSIO_AUTH_CONFIGS");
+    expect(explainComposioAuthError(new Error("other"), "snowflake")).toBeUndefined();
+  });
+});

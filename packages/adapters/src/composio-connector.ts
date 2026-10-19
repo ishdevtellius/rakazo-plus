@@ -301,8 +301,39 @@ export function planLiveConnectionSync(
   return { connectIds, revokeIds };
 }
 
+// Toolkits Composio does not manage auth for (Snowflake, many database/API-key apps) need an auth config the owner
+// creates in the Composio dashboard. COMPOSIO_AUTH_CONFIGS='{"snowflake":"ac_..."}' maps toolkit slug -> auth config id.
+export function parseAuthConfigs(raw: string | undefined): Record<string, string> {
+  if (!raw?.trim()) return {};
+  try {
+    const parsed = JSON.parse(raw) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return {};
+    return Object.fromEntries(
+      Object.entries(parsed).filter(
+        (entry): entry is [string, string] => typeof entry[1] === "string" && entry[1].length > 0,
+      ),
+    );
+  } catch {
+    return {};
+  }
+}
+
+const NO_MANAGED_AUTH_CODE = 4308;
+
+export function explainComposioAuthError(error: unknown, provider: string): string | undefined {
+  const text = error instanceof Error ? error.message : String(error);
+  if (!text.includes("NoManagedAuth") && !text.includes(`"code":${NO_MANAGED_AUTH_CODE}`)) return undefined;
+  return (
+    `Composio has no shared sign-in for "${provider}". Create an auth config for it in the Composio dashboard ` +
+    `(Auth Configs, Create, ${provider}), then set COMPOSIO_AUTH_CONFIGS='{"${provider}":"ac_..."}' in .env and restart the api.`
+  );
+}
+
 export class ComposioConnector implements ComposioProvider {
   constructor(private readonly apiKey?: string) {}
+  private authConfigs(): Record<string, string> {
+    return parseAuthConfigs(process.env.COMPOSIO_AUTH_CONFIGS);
+  }
   private client: Composio | undefined;
   private readonly catalogSessions = new Map<string, string>();
   private readonly executeSessions = new Map<string, { sessionId: string; key: string }>();
@@ -326,9 +357,11 @@ export class ComposioConnector implements ComposioProvider {
         this.catalogSessions.delete(userId);
       }
     }
+    const authConfigs = this.authConfigs();
     const session = await composio.create(userId, {
       manageConnections: false,
       sandbox: { enable: false },
+      ...(Object.keys(authConfigs).length > 0 ? { authConfigs } : {}),
     });
     this.catalogSessions.set(userId, session.sessionId);
     return session;
@@ -384,6 +417,7 @@ export class ComposioConnector implements ComposioProvider {
       manageConnections: false,
       sandbox: { enable: false },
       toolkits: canonicalToolkits,
+      ...(Object.keys(this.authConfigs()).length > 0 ? { authConfigs: this.authConfigs() } : {}),
       ...(Object.keys(connectedAccounts).length > 0 ? { connectedAccounts } : {}),
       ...(needsMultiAccount
         ? {
@@ -535,7 +569,7 @@ export class ComposioConnector implements ComposioProvider {
       if (isNoAuthToolkitError(error)) {
         return { authorizationUrl: null, state: request.provider };
       }
-      throw new Error(sanitizeComposioError(error));
+      throw new Error(explainComposioAuthError(error, request.provider) ?? sanitizeComposioError(error));
     }
   }
 
