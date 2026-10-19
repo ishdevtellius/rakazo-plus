@@ -973,7 +973,9 @@ export async function createApp(
       () => ({
         runtime: env.agentRuntime,
         sandbox: env.sandboxProvider,
-        composio: Boolean(stack.composio),
+        // stack.composio only holds a test override; the real connector is built from the key and registered through
+        // integrationSettings, so reading the stack alone reported false for a working key.
+        composio: Boolean(stack.composio) || isComposioEnabled(env.composioApiKey),
         pipedream: Boolean(pipedream),
         messaging: Boolean(messaging),
         email: email?.describe().id ?? null,
