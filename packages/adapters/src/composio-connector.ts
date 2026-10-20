@@ -331,8 +331,13 @@ export function explainComposioAuthError(error: unknown, provider: string): stri
 
 export class ComposioConnector implements ComposioProvider {
   constructor(private readonly apiKey?: string) {}
-  private authConfigs(): Record<string, string> {
-    return parseAuthConfigs(process.env.COMPOSIO_AUTH_CONFIGS);
+  private authConfigs(onlyToolkits?: string[]): Record<string, string> {
+    const all = parseAuthConfigs(process.env.COMPOSIO_AUTH_CONFIGS);
+    if (!onlyToolkits) return all;
+    // Composio rejects an override for a toolkit that is not enabled in the session (error 4307), and that fails
+    // every call in the session, so a session only gets the overrides for toolkits it actually enables.
+    const enabled = new Set(onlyToolkits.map((slug) => composioSlugKey(slug)));
+    return Object.fromEntries(Object.entries(all).filter(([slug]) => enabled.has(composioSlugKey(slug))));
   }
   private client: Composio | undefined;
   private readonly catalogSessions = new Map<string, string>();
@@ -357,11 +362,9 @@ export class ComposioConnector implements ComposioProvider {
         this.catalogSessions.delete(userId);
       }
     }
-    const authConfigs = this.authConfigs();
     const session = await composio.create(userId, {
       manageConnections: false,
       sandbox: { enable: false },
-      ...(Object.keys(authConfigs).length > 0 ? { authConfigs } : {}),
     });
     this.catalogSessions.set(userId, session.sessionId);
     return session;
@@ -417,7 +420,9 @@ export class ComposioConnector implements ComposioProvider {
       manageConnections: false,
       sandbox: { enable: false },
       toolkits: canonicalToolkits,
-      ...(Object.keys(this.authConfigs()).length > 0 ? { authConfigs: this.authConfigs() } : {}),
+      ...(Object.keys(this.authConfigs(canonicalToolkits)).length > 0
+        ? { authConfigs: this.authConfigs(canonicalToolkits) }
+        : {}),
       ...(Object.keys(connectedAccounts).length > 0 ? { connectedAccounts } : {}),
       ...(needsMultiAccount
         ? {
@@ -549,7 +554,18 @@ export class ComposioConnector implements ComposioProvider {
     request: { provider: string; redirectUrl: string },
     context: AdapterContext,
   ): Promise<{ authorizationUrl: string | null; state: string }> {
-    const session = await this.sessionFor(context.userId);
+    // A toolkit with an owner-supplied auth config signs in through a session that enables only that toolkit with its
+    // override; the shared catalog session never carries overrides (Composio rejects overrides for toolkits it lacks).
+    const override = this.authConfigs([request.provider]);
+    const session =
+      Object.keys(override).length > 0
+        ? await this.sdk().create(context.userId, {
+            manageConnections: false,
+            sandbox: { enable: false },
+            toolkits: [request.provider],
+            authConfigs: override,
+          })
+        : await this.sessionFor(context.userId);
     try {
       const connectionRequest = await session.authorize(request.provider, {
         callbackUrl: request.redirectUrl,
