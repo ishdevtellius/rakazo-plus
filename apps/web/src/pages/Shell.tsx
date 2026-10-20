@@ -96,6 +96,8 @@ import {
   CircleAlert,
   Clock,
   Copy,
+  FolderUp,
+  LayoutGrid,
   Lock,
   Maximize2,
   Menu,
@@ -228,6 +230,7 @@ import {
   revokePendingAttachmentPreviews,
   usePendingAttachmentPreviewCleanup,
 } from "../lib/pending-attachments";
+import { zipFolder } from "../lib/zip-folder";
 import { markAfterPaint, markOnce } from "../lib/performance";
 import { usePreloadRecoveryState } from "../lib/preload-recovery";
 import { quoteDraftForSelection } from "../lib/quote-selection";
@@ -4051,6 +4054,8 @@ function SpaceShell() {
             sending={sending}
             fileInputRef={fileInputRef}
             onAttachmentPick={onAttachmentPick}
+            onAttachmentNotice={setAttachmentNotice}
+            onOpenIntegrations={() => setPluginsOpen(true)}
             onRemoveAttachment={removeAttachment}
             onSend={sendMessage}
             onStop={stopRun}
@@ -5830,6 +5835,8 @@ export const Composer = memo(function Composer({
   sending,
   fileInputRef,
   onAttachmentPick,
+  onAttachmentNotice,
+  onOpenIntegrations,
   onRemoveAttachment,
   onSend,
   onStop,
@@ -5859,6 +5866,8 @@ export const Composer = memo(function Composer({
   sending: boolean;
   fileInputRef: RefObject<HTMLInputElement | null>;
   onAttachmentPick: (files: FileList | null) => boolean;
+  onAttachmentNotice?: (notice: string | null) => void;
+  onOpenIntegrations?: () => void;
   onRemoveAttachment: (attachment: PendingAttachment) => void;
   onSend: (text: string, mentions: ComposerMention[], clientNonce: string) => Promise<boolean>;
   onStop: () => Promise<void>;
@@ -6038,6 +6047,31 @@ export const Composer = memo(function Composer({
   function markEdited() {
     editRevision.current += 1;
     retryNonce.current = null;
+  }
+
+  const folderInputRef = useRef<HTMLInputElement>(null);
+  async function pickFolder(files: FileList | null) {
+    const picked = files ? Array.from(files) : [];
+    if (folderInputRef.current) folderInputRef.current.value = "";
+    if (!picked.length) return;
+    const zipped = await zipFolder(picked);
+    if (zipped.included === 0) {
+      onAttachmentNotice?.(t`The folder has no files that can be attached.`);
+      return;
+    }
+    const transfer = new DataTransfer();
+    transfer.items.add(zipped.file);
+    if (onAttachmentPick(transfer.files)) markEdited();
+    if (zipped.skipped.length) {
+      const left = zipped.skipped.slice(0, 5).join(", ");
+      onAttachmentNotice?.(t`Left out of the folder: ${left}`);
+    }
+  }
+
+  function startSlash() {
+    markEdited();
+    updateDraft("/");
+    textareaRef.current?.focus();
   }
 
   function pickAttachments(files: FileList | null) {
@@ -6543,19 +6577,58 @@ export const Composer = memo(function Composer({
           className="hidden"
           onChange={(event) => pickAttachments(event.target.files)}
         />
-        <Button
-          ref={attachButtonRef}
-          variant="ghost"
-          size="icon"
-          aria-label={t`Attach file`}
-          disabled={disabled}
-          onClick={() => fileInputRef.current?.click()}
-          className={`col-start-1 size-8 shrink-0 rounded-full border border-border bg-muted text-muted-foreground transition-colors hover:bg-accent hover:text-foreground ${
-            expanded ? "row-start-2" : ""
-          }`}
-        >
-          <Plus size={16} strokeWidth={2} />
-        </Button>
+        <input
+          ref={folderInputRef}
+          type="file"
+          multiple
+          className="hidden"
+          {...({ webkitdirectory: "", directory: "" } as Record<string, string>)}
+          onChange={(event) => void pickFolder(event.target.files)}
+        />
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={
+              <Button
+                ref={attachButtonRef}
+                variant="ghost"
+                size="icon"
+                aria-label={t`Attach file`}
+                disabled={disabled}
+                className={`col-start-1 size-8 shrink-0 rounded-full border border-border bg-muted text-muted-foreground transition-colors hover:bg-accent hover:text-foreground ${
+                  expanded ? "row-start-2" : ""
+                }`}
+              />
+            }
+          >
+            <Plus size={16} strokeWidth={2} />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            aria-label={t`Add to message`}
+            align="start"
+            side="top"
+            sideOffset={8}
+            className="w-[240px]"
+          >
+            <DropdownMenuItem onClick={() => fileInputRef.current?.click()}>
+              <Paperclip />
+              {t`Add files or photos`}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => folderInputRef.current?.click()}>
+              <FolderUp />
+              {t`Add folder`}
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={startSlash}>
+              <Box />
+              {t`Slash commands`}
+            </DropdownMenuItem>
+            {onOpenIntegrations ? (
+              <DropdownMenuItem onClick={onOpenIntegrations}>
+                <LayoutGrid />
+                {t`Connectors`}
+              </DropdownMenuItem>
+            ) : null}
+          </DropdownMenuContent>
+        </DropdownMenu>
         <div
           ref={composerFieldRef}
           className={`flex min-w-0 flex-wrap items-end gap-1.5 ${

@@ -5253,3 +5253,31 @@ msgstr "Votre OpenRouter"
 #: src/pages/Welcome.tsx
 msgid "Your team of always-on agents<0/>that you can give real work to."
 msgstr "Votre équipe d'agents toujours actifs<0/>à qui vous pouvez confier de vrais travaux."
+
+#: src/pages/Shell.tsx
+msgid "Add files or photos"
+msgstr ""
+
+#: src/pages/Shell.tsx
+msgid "Add folder"
+msgstr ""
+
+#: src/pages/Shell.tsx
+msgid "Slash commands"
+msgstr ""
+
+#: src/pages/Shell.tsx
+msgid "Connectors"
+msgstr ""
+
+#: src/pages/Shell.tsx
+msgid "Add to message"
+msgstr ""
+
+#: src/pages/Shell.tsx
+msgid "The folder has no files that can be attached."
+msgstr ""
+
+#: src/pages/Shell.tsx
+msgid "Left out of the folder: {left}"
+msgstr ""
