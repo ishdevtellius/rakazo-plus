@@ -46,9 +46,14 @@ export function isProviderTimeout(error: unknown): boolean {
   return /timed? out|timeout/.test(errorFacts(error).text);
 }
 
+const DRAINED_SUBSCRIPTION_PROXY = /no provider lists model|workspace_member_credits_depleted|credits_depleted/;
+
 /** Only provider availability failures may advance the user's explicit chain. */
 export function isRetryableProviderUnavailable(error: unknown): boolean {
   const { text, statuses } = errorFacts(error);
+  // A dario proxy answers HTTP 400 "no provider lists model" once every ChatGPT seat is out of credits. The request is
+  // fine; the subscription is exhausted, so a configured backup model should take over instead of the run failing.
+  if (DRAINED_SUBSCRIPTION_PROXY.test(text)) return true;
   if (statuses.has(400) || statuses.has(401)) return false;
   // Kimi For Coding reports an exhausted usage window as HTTP 403. errorFacts lowercases text.
   if (
@@ -103,6 +108,8 @@ export function isRetryableProviderUnavailable(error: unknown): boolean {
  */
 export function isTransientModelError(error: unknown): boolean {
   const { text } = errorFacts(error);
+  // Drained credits will not clear within a retry budget; only a backup model helps.
+  if (DRAINED_SUBSCRIPTION_PROXY.test(text)) return false;
   // Short rate windows can reset during a retry; subscription and billing limits cannot.
   const shortWindow =
     /\bper[- ](?:second|minute)\b|\b(?:rpm|tpm)\b|retry[- ]after[: ]+\d+(?:\.\d+)?\s*(?:seconds?|secs?|s)\b/.test(

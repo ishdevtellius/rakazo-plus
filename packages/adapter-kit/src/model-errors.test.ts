@@ -225,7 +225,21 @@ describe("provider availability classification", () => {
     ["HTTP server status", new Error("HTTP 500"), true],
     ["context overflow", new Error("context_length_exceeded; retry after 60s"), false],
     ["transient server failure", { status: 503, message: "service unavailable" }, true],
+    [
+      "drained subscription proxy",
+      { status: 400, message: 'no provider lists model "gpt-5.6-sol" (consulted no codex account)' },
+      true,
+    ],
+    ["other 400 stays a bad request", { status: 400, message: "invalid request body" }, false],
   ])("classifies %s", (_label, error, expected) => {
     expect(isRetryableProviderUnavailable(error)).toBe(expected);
+  });
+});
+
+describe("drained subscription proxy", () => {
+  it("is not retried on the same model", () => {
+    expect(
+      isTransientModelError({ status: 400, message: 'no provider lists model "gpt-5.6-sol"' }),
+    ).toBe(false);
   });
 });
