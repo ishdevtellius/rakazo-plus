@@ -3,6 +3,8 @@ import type {
   CommandRequest,
   ComputerFileEntry,
   ComputerRef,
+  PageBrowserCommand,
+  PageBrowserResult,
   PortableFile,
   ProcessEvent,
   SandboxProvider,
@@ -20,6 +22,7 @@ import {
   HOST_COMPUTER_MAX_FILE_BYTES,
   hostComputerDeadlineMs,
 } from "./host-computer-protocol.js";
+import { importHostWorkspace } from "./host-computer-workspace.js";
 
 /** Authenticated native host transport. Commands are never retried after a lost response. */
 export class HostComputerSandbox implements SandboxProvider {
@@ -184,7 +187,14 @@ export class HostComputerSandbox implements SandboxProvider {
     files: AsyncIterable<PortableFile>,
     context: AdapterContext,
   ) {
-    for await (const file of files) await this.writeFile(computer, file, context);
+    await importHostWorkspace(files, (file) => this.writeFile(computer, file, context));
+  }
+  /** The page browser on the user's own machine: a Chrome the owner started with a debug port. */
+  pageBrowser(computer: ComputerRef, request: PageBrowserCommand, context: AdapterContext) {
+    return this.one<PageBrowserResult>(
+      { method: "pageBrowser", botId: computer.botId, request },
+      context,
+    );
   }
   snapshot(computer: ComputerRef, context: AdapterContext) {
     return this.one<{ id: string; createdAt: string }>(

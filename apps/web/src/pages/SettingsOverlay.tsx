@@ -8,6 +8,7 @@ import {
   CreditCard,
   Gauge,
   KeyRound,
+  Laptop,
   Monitor,
   Settings,
   ShieldCheck,
@@ -29,6 +30,7 @@ import {
   UsageSettingsPanel,
 } from "./AccountSettingsOverlay";
 import { BillingSettingsPanel } from "./BillingSettingsPanel";
+import { ComputerHostSettingsPanel } from "./ComputerHostSettingsPanel";
 import { MemorySettingsOverlay } from "./MemorySettingsOverlay";
 import { ModelSettingsOverlay } from "./ModelSettingsOverlay";
 import { VaultSettingsPanel } from "./VaultSettingsPanel";
@@ -41,6 +43,7 @@ export type SettingsSection =
   | "voice"
   | "confirmations"
   | "vault"
+  | "runs"
   | "usage"
   | "computer"
   | "billing"
@@ -127,6 +130,8 @@ export function SettingsOverlay({
   const recoveryHoldTimer = useRef<number | undefined>(undefined);
   const showComputer =
     keepComputerRecovery || (isDeploymentOwner && computersAreUnavailable(sandboxProvider));
+  // Only the owner of a Docker-based deployment can move bots onto this machine.
+  const canChooseHost = isDeploymentOwner && sandboxProvider === "docker";
   const panelBusy = memoryBusy || voiceBusy;
   const spaceScoped = SPACE_SECTIONS.has(section);
   const spaceId = spaceScoped ? (space?.id ?? null) : null;
@@ -209,6 +214,7 @@ export function SettingsOverlay({
     { id: "voice", label: t`Voice`, icon: Volume2 },
     { id: "confirmations", label: t`Confirmations`, icon: ShieldCheck },
     { id: "vault", label: t`Vault`, icon: KeyRound },
+    ...(canChooseHost ? [{ id: "runs" as const, label: t`Where bots run`, icon: Laptop }] : []),
     { id: "usage", label: t`Usage`, icon: Gauge },
     ...(showComputer ? [{ id: "computer" as const, label: t`Computer`, icon: Monitor }] : []),
     ...(billingEnabled ? [{ id: "billing" as const, label: t`Billing`, icon: CreditCard }] : []),
@@ -352,6 +358,7 @@ export function SettingsOverlay({
                 ) : null}
                 {section === "confirmations" ? <ApprovalRulesSettings /> : null}
                 {section === "vault" ? <VaultSettingsPanel /> : null}
+                {section === "runs" && canChooseHost ? <ComputerHostSettingsPanel /> : null}
                 {section === "usage" ? (
                   <UsageSettingsPanel usage={usage} panelRef={usageRef} />
                 ) : null}

@@ -284,7 +284,12 @@ export async function checkpointComputerWorkspace(
   computer: ComputerRef,
   context: AdapterContext,
 ): Promise<string> {
-  if (computer.kind === "docker" && home instanceof LocalAgentHomeStore) {
+  // Docker keeps the live workspace in the local store, and a desktop computer keeps it on the
+  // user's own disk: copying it back after every run would only move files that are already home.
+  if (
+    (computer.kind === "docker" || computer.kind === "desktop") &&
+    home instanceof LocalAgentHomeStore
+  ) {
     return home.revise(homeKey);
   }
   const staging = await mkdtemp(path.join(tmpdir(), "rakazo-workspace-"));
@@ -305,7 +310,11 @@ export async function checkpointRunComputerWorkspace(
   computer: ComputerRef,
   context: AdapterContext,
 ): Promise<string | undefined> {
-  if (computerRecord.scope !== "team" || computer.kind === "docker") {
+  if (
+    computerRecord.scope !== "team" ||
+    computer.kind === "docker" ||
+    computer.kind === "desktop"
+  ) {
     return checkpointAndRecordComputerWorkspace(deps, computerRecord, computer, context);
   }
   const now = new Date();

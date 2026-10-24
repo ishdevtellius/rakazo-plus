@@ -27,6 +27,15 @@ const directories = z.discriminatedUnion("action", [
     names: z.array(z.string().max(256)).max(256),
   }),
 ]);
+/** The live-page commands the bot's browser tools send; steps are validated by the driver itself. */
+const pageBrowserCommand = z.discriminatedUnion("command", [
+  z.object({ command: z.literal("navigate"), url: z.string().max(8192) }),
+  z.object({ command: z.literal("snapshot") }),
+  z.object({
+    command: z.literal("act"),
+    actions: z.array(z.record(z.string(), z.unknown())).max(200),
+  }),
+]);
 const base = { botId: z.string().min(1).max(256), runId: z.string().min(1).max(256).optional() };
 export const hostComputerRequest = z.discriminatedUnion("method", [
   z.object({
@@ -57,6 +66,7 @@ export const hostComputerRequest = z.discriminatedUnion("method", [
     maxBytes: z.number().int().positive().max(HOST_COMPUTER_MAX_FILE_BYTES).optional(),
   }),
   z.object({ ...base, method: z.literal("writeFile"), file }),
+  z.object({ ...base, method: z.literal("pageBrowser"), request: pageBrowserCommand }),
 ]);
 export type HostComputerRequest = z.infer<typeof hostComputerRequest>;
 export interface HostComputerEnvironment {

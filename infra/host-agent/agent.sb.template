@@ -1,0 +1,15 @@
+(version 1)
+(allow default)
+;; Your home folder: paths resolve, but file contents cannot be read or listed, and nothing can be
+;; written. Bots work in the folders allowed below.
+(deny file-read-data (subpath "__HOME__"))
+(deny file-write* (subpath "__HOME__"))
+(allow file-read-data file-write* (subpath "__WORK__"))
+(allow file-read-data file-write* (subpath "__DATA__/computers"))
+(allow file-read-data (literal "__DATA__/agent.bundle.mjs"))
+(allow file-read-data (literal "__DATA__/rakazo-page-browser"))
+(allow file-read-data (literal "__HOME__/.gitconfig"))
+(allow file-read-data file-write* (subpath "__HOME__/.npm"))
+(allow file-read-data file-write* (subpath "__HOME__/.cache"))
+;; Keychain access through the security service.
+(deny mach-lookup (global-name "com.apple.SecurityServer"))

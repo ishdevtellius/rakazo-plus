@@ -19,6 +19,7 @@ Commits on top of upstream commit `faed3f73` (see `git log faed3f73..HEAD`):
 | Tool browser | Integrations and bot settings list every tool of an app, labelled "Read only" or "Changes data", with per-tool switches |
 | Shared vault | Settings > Vault: save a website login once, choose which bots may use it. A bot types it only into the saved HTTPS site and never sees the password |
 | Bot templates gallery | **+ > Browse bot templates**: about 35 generic, ready-made bots in 8 categories with a Featured row, per-category "View all", a detail view with the full instructions, and a "needs these apps" line. Every template starts with changes to connected apps blocked. Add your own in `apps/web/src/lib/bot-templates-catalog.ts` |
+| Run bots on your own Mac | **Settings > Where bots run**: switch every bot's computer between the Docker computer and this Mac. Commands run natively (much faster), and bots browse with a separate Chrome window you sign in to once. A sandboxed [Mac host agent](../infra/host-agent/README.md) keeps bots out of your home folder. Includes fixes so large saved workspaces restore and runs no longer copy the workspace back each time |
 | Translations | The new strings are in all locale catalogs (English text for locales without a translation yet) |
 
 ## Build and run

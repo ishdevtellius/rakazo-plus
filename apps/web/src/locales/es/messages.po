@@ -948,6 +948,10 @@ msgstr "Bots"
 msgid "Bots are working"
 msgstr "Los bots están trabajando"
 
+#: src/pages/ComputerHostSettingsPanel.tsx
+msgid "Bots run commands on this machine and browse with a separate Chrome window. Much faster. Commands run as you without asking, inside the folders the host agent allows."
+msgstr ""
+
 #: src/pages/VaultSettingsPanel.tsx
 msgid "Bots that may sign in with this login:"
 msgstr ""
@@ -1015,6 +1019,7 @@ msgstr "No puede leer imágenes"
 #: src/components/markdown-link-prompt.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/pages/Artifacts.tsx
+#: src/pages/ComputerHostSettingsPanel.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
@@ -1760,6 +1765,10 @@ msgstr "No se pudo cargar este chat."
 msgid "Could not load this file."
 msgstr "No se pudo cargar este archivo."
 
+#: src/pages/ComputerHostSettingsPanel.tsx
+msgid "Could not load this setting."
+msgstr ""
+
 #: src/components/SoftwareUpdateSection.tsx
 msgid "Could not load update status"
 msgstr "No se pudo cargar el estado de actualización"
@@ -1880,6 +1889,7 @@ msgstr "No se pudo guardar la regla"
 msgid "Could not save skill"
 msgstr "No se pudo guardar la habilidad"
 
+#: src/pages/ComputerHostSettingsPanel.tsx
 #: src/pages/HostComputerPrompt.tsx
 msgid "Could not save that choice"
 msgstr "No se pudo guardar esa opción"
@@ -2279,6 +2289,10 @@ msgstr "Nombre para mostrar"
 msgid "Docker"
 msgstr "Docker"
 
+#: src/pages/ComputerHostSettingsPanel.tsx
+msgid "Docker computer"
+msgstr ""
+
 #: src/components/ComputersUnavailableHint.tsx
 msgid "Docker is configured but computers are not responding. Confirm the sandbox supervisor is running, then recreate the stack after changing .env."
 msgstr ""
@@ -2341,6 +2355,10 @@ msgstr "Duplicar"
 #: src/pages/shell/bot-panel.tsx
 msgid "e.g. Hivenet Agent, Presales, Timesheets bot"
 msgstr "p. ej. Hivenet Agent, Presales, bot de hojas de horas"
+
+#: src/pages/ComputerHostSettingsPanel.tsx
+msgid "Each bot works in an isolated computer with a desktop you can watch. Safest, but slower to start and to use."
+msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Edit"
@@ -2419,6 +2437,10 @@ msgstr "Cada"
 #: src/pages/RoutineSchedule.tsx
 msgid "every {intervalAmountSelect} {intervalUnitSelect}"
 msgstr "cada {intervalAmountSelect} {intervalUnitSelect}"
+
+#: src/pages/ComputerHostSettingsPanel.tsx
+msgid "Every bot will be able to run commands on this machine. Continue?"
+msgstr ""
 
 #: src/pages/RoutineEditor.tsx
 #: src/pages/RoutineSchedule.tsx
@@ -3000,6 +3022,7 @@ msgstr "Cargando proveedores de voz…"
 #: src/App.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/Auth.tsx
+#: src/pages/ComputerHostSettingsPanel.tsx
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/ModelBackupsSettings.tsx
 #: src/pages/Onboarding.tsx
@@ -3363,6 +3386,10 @@ msgstr "Necesita entrada"
 #: src/pages/ActivityList.tsx
 msgid "Needs takeover"
 msgstr "Necesita toma de control"
+
+#: src/pages/ComputerHostSettingsPanel.tsx
+msgid "Needs the host agent and its Chrome running (start-agent.sh and start-chrome.sh)."
+msgstr ""
 
 #: src/lib/roster-status.ts
 #: src/pages/Shell.tsx
@@ -4836,6 +4863,7 @@ msgstr "Admite razonamiento"
 msgid "Switch bot"
 msgstr ""
 
+#: src/pages/ComputerHostSettingsPanel.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Switching…"
 msgstr "Cambiando…"
@@ -4937,6 +4965,10 @@ msgstr "Pensando"
 msgid "Thinking: {activeThinkingLabel}"
 msgstr ""
 
+#: src/pages/ComputerHostSettingsPanel.tsx
+msgid "This applies to every bot. Switching does not delete anything, and you can switch back at any time."
+msgstr ""
+
 #: src/pages/Shell.tsx
 msgid "This bot runs on this computer, not a Linux desktop. Shell and files use your home folder."
 msgstr "Este bot se ejecuta en esta computadora, no en un escritorio Linux. El shell y los archivos usan tu carpeta de inicio."
@@ -4973,6 +5005,10 @@ msgstr ""
 #: src/pages/HostComputerPrompt.tsx
 msgid "this Mac"
 msgstr "esta Mac"
+
+#: src/pages/ComputerHostSettingsPanel.tsx
+msgid "This Mac"
+msgstr ""
 
 #: src/pages/Artifacts.tsx
 msgid "This month"
@@ -5276,8 +5312,16 @@ msgstr "Usa Conectar para verificar la clave."
 msgid "Use default guidance"
 msgstr ""
 
+#: src/pages/ComputerHostSettingsPanel.tsx
+msgid "Use Docker"
+msgstr ""
+
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Use Protected input for passwords."
+msgstr ""
+
+#: src/pages/ComputerHostSettingsPanel.tsx
+msgid "Use this Mac"
 msgstr ""
 
 #: src/pages/ModelSettingsOverlay.tsx
@@ -5426,6 +5470,11 @@ msgstr "Cuándo ejecutar"
 msgid "When to use"
 msgstr "Cuándo usar"
 
+#: src/pages/ComputerHostSettingsPanel.tsx
+#: src/pages/SettingsOverlay.tsx
+msgid "Where bots run"
+msgstr ""
+
 #: src/pages/HostComputerPrompt.tsx
 msgid "Where should bots run?"
 msgstr "¿Dónde deben ejecutarse los bots?"
@@ -5445,6 +5494,10 @@ msgstr ""
 
 #: src/lib/billing.ts
 msgid "year"
+msgstr ""
+
+#: src/pages/ComputerHostSettingsPanel.tsx
+msgid "Yes, switch"
 msgstr ""
 
 #: src/pages/Shell.tsx

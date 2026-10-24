@@ -4140,8 +4140,12 @@ export function createRunExecutor(deps: ExecutorDeps) {
         const callClientNonceForRun = callEndRun ? run.clientNonce : sourceClientNonce;
         const voiceCall = callEndRun || isCallClientNonce(sourceClientNonce);
         const graphicalToolsAllowed = graphical && acceptsImages && !heldForTakeover;
+        // A computer on the owner's machine has no screen, but it can drive the owner's own Chrome.
+        const hostPageBrowser = computerKind === "desktop" && Boolean(deps.sandbox.pageBrowser);
         const pageBrowserAllowed =
-          graphical && browser.describe().capabilities.page && !heldForTakeover;
+          (graphical || hostPageBrowser) &&
+          browser.describe().capabilities.page &&
+          !heldForTakeover;
         const disabledBuiltinTools = disabledBuiltinToolSet(bot.disabledBuiltinTools);
         const connectorToolPolicy = parseConnectorToolPolicy(bot.connectorToolPolicy);
         const builtins = [

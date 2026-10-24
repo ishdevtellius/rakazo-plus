@@ -8,7 +8,7 @@ import {
   symlink,
   writeFile,
 } from "node:fs/promises";
-import { tmpdir } from "node:os";
+import { homedir, tmpdir } from "node:os";
 import path from "node:path";
 import type { ComputerRef, ProcessEvent } from "@rakazo/adapter-kit";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -161,9 +161,11 @@ describe("native host computer transport", () => {
     ).toBe(`${payload}\n`);
     expect(events).toContainEqual({ type: "stderr", data: "unset\n" });
     expect(events.at(-1)).toEqual({ type: "exit", code: 0 });
-    expect(await client.environment(computer, context)).toMatchObject({
-      platform: process.platform,
-    });
+    const reported = await client.environment(computer, context);
+    expect(reported).toMatchObject({ platform: process.platform });
+    // The computer's home is its own workspace folder, never the user's real home folder.
+    expect(reported.home).not.toBe(homedir());
+    expect(reported.home).toContain("desktop-computers");
   });
 
   it("uses the host shell for the real shell tool, including PowerShell on Windows", async () => {

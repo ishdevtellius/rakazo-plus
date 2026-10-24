@@ -3,7 +3,8 @@ import { once } from "node:events";
 import { createServer } from "node:http";
 import { homedir } from "node:os";
 import path from "node:path";
-import type { AdapterContext, ComputerRef } from "@rakazo/adapter-kit";
+import type { AdapterContext, ComputerRef, PageBrowserCommand } from "@rakazo/adapter-kit";
+import { getLogger } from "@rakazo/logging";
 import { DesktopSandboxProvider } from "./desktop-sandbox.js";
 import type { HostComputerRequest } from "./host-computer-protocol.js";
 import {
@@ -12,6 +13,8 @@ import {
   hostComputerDeadlineMs,
   hostComputerRequest,
 } from "./host-computer-protocol.js";
+import { skipsHostWorkspaceFile } from "./host-computer-workspace.js";
+import { PAGE_BROWSER_NOT_SET_UP, runPageBrowser } from "./host-page-browser.js";
 
 /** No renderer receives the credential. Docker reaches this listener through its host gateway. */
 export async function startHostComputerServer(options: {
@@ -19,6 +22,8 @@ export async function startHostComputerServer(options: {
   token: string;
   port?: number;
   hostname?: string;
+  /** The owner's own Chrome, started with a debug port, driven through the CDP helper script. */
+  pageBrowser?: { script: string; python: string; cdpPort: number };
 }) {
   if (!/^[a-f0-9]{64}$/.test(options.token)) throw new Error("Invalid local computer credential");
   let enabled = false;
@@ -128,10 +133,13 @@ export async function startHostComputerServer(options: {
       }
       if (!controller.signal.aborted) response.end(`${JSON.stringify({ done: true })}\n`);
     } catch (error) {
+      // The caller only gets a generic message, so the owner's terminal keeps the real cause.
+      getLogger().error("host computer request failed", error);
       let message = "Local computer operation failed";
       if (
         error instanceof Error &&
         (error.message === "Path escapes the computer workspace" ||
+          error.message === PAGE_BROWSER_NOT_SET_UP ||
           /^computer file exceeds \d+ bytes$/.test(error.message))
       ) {
         message = error.message;
@@ -177,7 +185,9 @@ export async function startHostComputerServer(options: {
     const computer = ref(input.botId);
     switch (input.method) {
       case "environment":
-        yield await provider.environment();
+        // Bots resolve their working folders against this home, so it is the computer's own
+        // workspace: reporting the real home would make team bots create folders directly in it.
+        yield { ...(await provider.environment()), home: computer.providerRef };
         break;
       case "provision": {
         const result = await provider.provision({ botId: computer.botId, homePath: "" }, context);
@@ -230,10 +240,18 @@ export async function startHostComputerServer(options: {
         break;
       case "exportWorkspace":
         for await (const file of provider.exportWorkspace(computer)) {
-          if (file.content.byteLength > HOST_COMPUTER_MAX_FILE_BYTES)
-            throw new Error(`computer file exceeds ${HOST_COMPUTER_MAX_FILE_BYTES} bytes`);
+          // A saved copy leaves out caches and files the bridge cannot carry, instead of failing.
+          if (skipsHostWorkspaceFile(file)) continue;
           yield { ...file, content: Buffer.from(file.content).toString("base64") };
         }
+        break;
+      case "pageBrowser":
+        yield await runPageBrowser(
+          options.pageBrowser,
+          // Each step is validated by the driver itself before it touches the page.
+          input.request as PageBrowserCommand,
+          context.signal,
+        );
         break;
       case "snapshot":
         yield await provider.snapshot(computer, context);

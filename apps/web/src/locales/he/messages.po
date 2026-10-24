@@ -948,6 +948,10 @@ msgstr "בוטים"
 msgid "Bots are working"
 msgstr "הבוטים עובדים"
 
+#: src/pages/ComputerHostSettingsPanel.tsx
+msgid "Bots run commands on this machine and browse with a separate Chrome window. Much faster. Commands run as you without asking, inside the folders the host agent allows."
+msgstr ""
+
 #: src/pages/VaultSettingsPanel.tsx
 msgid "Bots that may sign in with this login:"
 msgstr ""
@@ -1015,6 +1019,7 @@ msgstr "לא ניתן לקרוא תמונות"
 #: src/components/markdown-link-prompt.tsx
 #: src/components/teach/TeachComputerOverlay.tsx
 #: src/pages/Artifacts.tsx
+#: src/pages/ComputerHostSettingsPanel.tsx
 #: src/pages/KnowledgeSection.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
@@ -1760,6 +1765,10 @@ msgstr "לא ניתן לטעון את הצ׳אט הזה."
 msgid "Could not load this file."
 msgstr "לא ניתן לטעון את הקובץ הזה."
 
+#: src/pages/ComputerHostSettingsPanel.tsx
+msgid "Could not load this setting."
+msgstr ""
+
 #: src/components/SoftwareUpdateSection.tsx
 msgid "Could not load update status"
 msgstr "לא ניתן לטעון את סטטוס העדכון"
@@ -1880,6 +1889,7 @@ msgstr "לא ניתן לשמור את הכלל"
 msgid "Could not save skill"
 msgstr "לא ניתן לשמור את המיומנות"
 
+#: src/pages/ComputerHostSettingsPanel.tsx
 #: src/pages/HostComputerPrompt.tsx
 msgid "Could not save that choice"
 msgstr "לא ניתן לשמור את הבחירה"
@@ -2279,6 +2289,10 @@ msgstr "שם תצוגה"
 msgid "Docker"
 msgstr "Docker"
 
+#: src/pages/ComputerHostSettingsPanel.tsx
+msgid "Docker computer"
+msgstr ""
+
 #: src/components/ComputersUnavailableHint.tsx
 msgid "Docker is configured but computers are not responding. Confirm the sandbox supervisor is running, then recreate the stack after changing .env."
 msgstr "Docker מוגדר אבל המחשבים לא מגיבים. יש לוודא שה-sandbox supervisor פועל, ואז ליצור מחדש את ה-stack אחרי שינוי .env."
@@ -2341,6 +2355,10 @@ msgstr "שכפול"
 #: src/pages/shell/bot-panel.tsx
 msgid "e.g. Hivenet Agent, Presales, Timesheets bot"
 msgstr "לדוגמה: Hivenet Agent, Presales, בוט דיווח שעות"
+
+#: src/pages/ComputerHostSettingsPanel.tsx
+msgid "Each bot works in an isolated computer with a desktop you can watch. Safest, but slower to start and to use."
+msgstr ""
 
 #: src/components/AskCard.tsx
 msgid "Edit"
@@ -2419,6 +2437,10 @@ msgstr "כל"
 #: src/pages/RoutineSchedule.tsx
 msgid "every {intervalAmountSelect} {intervalUnitSelect}"
 msgstr "כל {intervalAmountSelect} {intervalUnitSelect}"
+
+#: src/pages/ComputerHostSettingsPanel.tsx
+msgid "Every bot will be able to run commands on this machine. Continue?"
+msgstr ""
 
 #: src/pages/RoutineEditor.tsx
 #: src/pages/RoutineSchedule.tsx
@@ -3000,6 +3022,7 @@ msgstr "טוען ספקי קול…"
 #: src/App.tsx
 #: src/pages/Artifacts.tsx
 #: src/pages/Auth.tsx
+#: src/pages/ComputerHostSettingsPanel.tsx
 #: src/pages/IntegrationSetup.tsx
 #: src/pages/ModelBackupsSettings.tsx
 #: src/pages/Onboarding.tsx
@@ -3363,6 +3386,10 @@ msgstr "ממתין לקלט"
 #: src/pages/ActivityList.tsx
 msgid "Needs takeover"
 msgstr "נדרשת השתלטות"
+
+#: src/pages/ComputerHostSettingsPanel.tsx
+msgid "Needs the host agent and its Chrome running (start-agent.sh and start-chrome.sh)."
+msgstr ""
 
 #: src/lib/roster-status.ts
 #: src/pages/Shell.tsx
@@ -4836,6 +4863,7 @@ msgstr "תומך בחשיבה"
 msgid "Switch bot"
 msgstr "החלפת בוט"
 
+#: src/pages/ComputerHostSettingsPanel.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Switching…"
 msgstr "מחליף…"
@@ -4937,6 +4965,10 @@ msgstr "חשיבה"
 msgid "Thinking: {activeThinkingLabel}"
 msgstr "חשיבה: {activeThinkingLabel}"
 
+#: src/pages/ComputerHostSettingsPanel.tsx
+msgid "This applies to every bot. Switching does not delete anything, and you can switch back at any time."
+msgstr ""
+
 #: src/pages/Shell.tsx
 msgid "This bot runs on this computer, not a Linux desktop. Shell and files use your home folder."
 msgstr "הבוט הזה פועל על המחשב הזה, לא על שולחן עבודה של Linux. המעטפת והקבצים משתמשים בתיקיית הבית."
@@ -4973,6 +5005,10 @@ msgstr "הקובץ אינו טקסט UTF-8 תקין."
 #: src/pages/HostComputerPrompt.tsx
 msgid "this Mac"
 msgstr "ה-Mac הזה"
+
+#: src/pages/ComputerHostSettingsPanel.tsx
+msgid "This Mac"
+msgstr ""
 
 #: src/pages/Artifacts.tsx
 msgid "This month"
@@ -5276,9 +5312,17 @@ msgstr "יש ללחוץ על חיבור כדי לאמת את המפתח."
 msgid "Use default guidance"
 msgstr "שימוש בהנחיות ברירת המחדל"
 
+#: src/pages/ComputerHostSettingsPanel.tsx
+msgid "Use Docker"
+msgstr ""
+
 #: src/components/teach/TeachRecordingChrome.tsx
 msgid "Use Protected input for passwords."
 msgstr "לסיסמאות יש להשתמש בקלט מוגן."
+
+#: src/pages/ComputerHostSettingsPanel.tsx
+msgid "Use this Mac"
+msgstr ""
 
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Use this model"
@@ -5426,6 +5470,11 @@ msgstr "מתי להריץ"
 msgid "When to use"
 msgstr "מתי להשתמש"
 
+#: src/pages/ComputerHostSettingsPanel.tsx
+#: src/pages/SettingsOverlay.tsx
+msgid "Where bots run"
+msgstr ""
+
 #: src/pages/HostComputerPrompt.tsx
 msgid "Where should bots run?"
 msgstr "איפה הבוטים ירוצו?"
@@ -5446,6 +5495,10 @@ msgstr ""
 #: src/lib/billing.ts
 msgid "year"
 msgstr "שנה"
+
+#: src/pages/ComputerHostSettingsPanel.tsx
+msgid "Yes, switch"
+msgstr ""
 
 #: src/pages/Shell.tsx
 #: src/pages/shell/chat-context.tsx

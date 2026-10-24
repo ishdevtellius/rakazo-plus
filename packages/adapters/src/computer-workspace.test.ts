@@ -83,6 +83,24 @@ describe("provider-neutral computer workspace", () => {
   });
 });
 
+describe("Local desktop computers", () => {
+  it("do not copy their workspace back into the store after a run", async () => {
+    const root = await mkdtemp(path.join(tmpdir(), "rakazo-workspace-store-"));
+    roots.push(root);
+    const home = new LocalAgentHomeStore(root);
+    const exportWorkspace = vi.fn();
+    const revision = await checkpointComputerWorkspace(
+      home,
+      { exportWorkspace } as never,
+      "bot-1",
+      { id: "desktop-1", providerRef: "host:1", kind: "desktop", botId: "bot-1" },
+      context,
+    );
+    expect(revision).toMatch(/^rev-/);
+    expect(exportWorkspace).not.toHaveBeenCalled();
+  });
+});
+
 describe("Team run checkpoints", () => {
   it("defers a remote export when another run prevents an exclusive checkpoint", async () => {
     const { checkpointRunComputerWorkspace } = await import("./computer-workspace.js");
