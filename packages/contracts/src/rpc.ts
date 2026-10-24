@@ -20,7 +20,13 @@ import {
   TicketSchema,
   UpdateTicketInput,
 } from "./board.js";
-import { BotSecretMetadata, BotSecretPutInput, StoredBotSecretName } from "./bot-secrets.js";
+import {
+  BotSecretMetadata,
+  BotSecretPutInput,
+  StoredBotSecretName,
+  VaultLoginMetadata,
+  VaultLoginPutInput,
+} from "./bot-secrets.js";
 import {
   ActionApprovalRuleSchema,
   ActionAutoReviewSettingsSchema,
@@ -45,6 +51,7 @@ import {
   ComputerUpdateSchema,
   ConnectionCatalogItemSchema,
   ConnectionSchema,
+  ConnectionToolSchema,
   CreateAgentSkillInput,
   CreateBotInput,
   CreateGroupInput,
@@ -829,6 +836,15 @@ export const appContract = {
       .input(z.object({ query: z.string().optional(), connectorId: z.string().optional() }))
       .output(z.array(ConnectionCatalogItemSchema)),
     list: oc.output(z.array(ConnectionSchema)),
+    /** Every tool one app offers, labelled read or write, for the per-bot tool picker. */
+    toolkitTools: oc
+      .input(
+        z.object({
+          connectorId: z.string().default("composio"),
+          provider: z.string().min(1).max(120),
+        }),
+      )
+      .output(z.array(ConnectionToolSchema)),
     begin: oc
       .input(
         z.object({
@@ -1044,6 +1060,14 @@ export const appContract = {
     remove: oc
       .input(z.object({ botId: Id, name: StoredBotSecretName }))
       .output(z.object({ ok: z.literal(true) })),
+  },
+  vault: {
+    list: oc.output(z.array(VaultLoginMetadata)),
+    put: oc.input(VaultLoginPutInput).output(VaultLoginMetadata),
+    remove: oc.input(z.object({ id: Id })).output(z.object({ ok: z.literal(true) })),
+    setAccess: oc
+      .input(z.object({ id: Id, botIds: z.array(Id).max(500) }))
+      .output(VaultLoginMetadata),
   },
 };
 

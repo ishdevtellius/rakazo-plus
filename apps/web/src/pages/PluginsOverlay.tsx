@@ -5,6 +5,7 @@ import type {
   ConnectionCatalogItem,
   IntegrationCatalogResult,
   IntegrationCatalogSurface,
+  ConnectionTool as ToolkitTool,
 } from "@rakazo/contracts";
 import {
   abortableDelay,
@@ -109,6 +110,8 @@ export function PluginsOverlay({
   const [catalogLoaded, setCatalogLoaded] = useState(false);
   const [detailKey, setDetailKey] = useState<{ connectorId: string; slug: string } | null>(null);
   const [tools, setTools] = useState<ConnectionTool[]>([]);
+  // The app's full tool list with read/write labels; empty when the provider cannot list it.
+  const [fullTools, setFullTools] = useState<ToolkitTool[]>([]);
   const [toolsLoading, setToolsLoading] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(true);
   const [toolsTick, setToolsTick] = useState(0);
@@ -165,11 +168,19 @@ export function PluginsOverlay({
   useEffect(() => {
     if (!detailKey) {
       setTools([]);
+      setFullTools([]);
       setToolsLoading(false);
       return;
     }
     let cancelled = false;
     setToolsLoading(true);
+    setFullTools([]);
+    void rpc.connections
+      .toolkitTools({ connectorId: detailKey.connectorId, provider: detailKey.slug })
+      .then((list) => {
+        if (!cancelled) setFullTools(list);
+      })
+      .catch(() => undefined);
     void rpc.connections
       .tools({ connectorId: detailKey.connectorId, provider: detailKey.slug })
       .then((list) => {
@@ -533,7 +544,8 @@ export function PluginsOverlay({
     const key = itemKey(item);
     const connecting = pending === key;
     const uninstalling = pending === `uninstall:${key}`;
-    const toolCount = tools.length;
+    const toolCount = fullTools.length > 0 ? fullTools.length : tools.length;
+    const writeToolCount = fullTools.filter((tool) => tool.write).length;
 
     return (
       <div data-testid="connection-detail" className="space-y-5">
@@ -650,6 +662,35 @@ export function PluginsOverlay({
                 <p className="text-sm text-muted-foreground">
                   <Trans>Loading tools…</Trans>
                 </p>
+              ) : fullTools.length > 0 ? (
+                <>
+                  <p
+                    data-testid="connection-tools-summary"
+                    className="mb-2 text-sm text-muted-foreground"
+                  >
+                    <Plural
+                      value={writeToolCount}
+                      one="# tool can change data"
+                      other="# tools can change data"
+                    />
+                    {" · "}
+                    <Trans>Choose which ones each bot may use in the bot's settings.</Trans>
+                  </p>
+                  <ul className="max-h-72 space-y-1.5 overflow-y-auto pr-1">
+                    {fullTools.map((tool) => (
+                      <li
+                        key={tool.slug}
+                        title={tool.description}
+                        className="flex items-center justify-between gap-3 text-sm text-foreground"
+                      >
+                        <span className="min-w-0 truncate">{humanizeToolName(tool.slug)}</span>
+                        <span className="shrink-0 text-xs text-muted-foreground">
+                          {tool.write ? <Trans>Changes data</Trans> : <Trans>Read only</Trans>}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </>
               ) : tools.length === 0 ? (
                 <p className="text-sm text-muted-foreground">
                   <Trans>No tools available.</Trans>

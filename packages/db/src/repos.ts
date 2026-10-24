@@ -1,5 +1,18 @@
-import type { Actor, Bot, BotSection, MessageBlock, SpaceBot } from "@rakazo/contracts";
-import { BOT_COLORS, canonicalPiProviderId, InstructionVersionSchema } from "@rakazo/contracts";
+import type {
+  Actor,
+  Bot,
+  BotSection,
+  ConnectorToolPolicy,
+  MessageBlock,
+  SpaceBot,
+} from "@rakazo/contracts";
+import {
+  BOT_COLORS,
+  canonicalPiProviderId,
+  DEFAULT_NEW_BOT_CONNECTOR_TOOL_POLICY,
+  InstructionVersionSchema,
+  parseConnectorToolPolicy,
+} from "@rakazo/contracts";
 import {
   BACKGROUND_RUN_TRIGGERS,
   displayName,
@@ -82,6 +95,7 @@ function mapBot(
     teamChatRules?: string;
     fleetManagement?: boolean;
     disabledBuiltinTools?: string[];
+    connectorToolPolicy?: unknown;
     webhookSecretId?: string | null;
     spawnKey?: string | null;
   },
@@ -127,6 +141,7 @@ function mapBot(
     teamChatRules: bot.teamChatRules ?? "",
     fleetManagement: bot.fleetManagement ?? false,
     disabledBuiltinTools: bot.disabledBuiltinTools ?? [],
+    connectorToolPolicy: parseConnectorToolPolicy(bot.connectorToolPolicy),
     webhookConfigured: Boolean(bot.webhookSecretId),
     spawnKey: bot.spawnKey ?? null,
     incomingCall,
@@ -497,6 +512,8 @@ export function createRepos(
         modelId?: string | null;
         thinkingLevel?: string | null;
         disabledBuiltinTools?: string[];
+        /** undefined: inherit the parent's policy, or start new bots with writes blocked. */
+        connectorToolPolicy?: ConnectorToolPolicy | null;
         initialMessage?: {
           role: "user" | "bot" | "system";
           blocks: MessageBlock[];
@@ -515,6 +532,10 @@ export function createRepos(
       let modelId = input.modelId ?? null;
       let thinkingLevel = input.thinkingLevel ?? null;
       let disabledBuiltinTools = input.disabledBuiltinTools ?? [];
+      let connectorToolPolicy: ConnectorToolPolicy | null =
+        input.connectorToolPolicy === undefined
+          ? DEFAULT_NEW_BOT_CONNECTOR_TOOL_POLICY
+          : input.connectorToolPolicy;
       if (input.parentBotId) {
         const parent = await prisma.bot.findFirst({
           where: {
@@ -531,6 +552,9 @@ export function createRepos(
         if (thinkingLevel == null) thinkingLevel = parent.thinkingLevel ?? null;
         if (input.disabledBuiltinTools === undefined) {
           disabledBuiltinTools = parent.disabledBuiltinTools;
+        }
+        if (input.connectorToolPolicy === undefined) {
+          connectorToolPolicy = parseConnectorToolPolicy(parent.connectorToolPolicy);
         }
       }
       const settings = await prisma.deploymentSettings.findUnique({ where: { id: "default" } });
@@ -571,6 +595,7 @@ export function createRepos(
               modelId,
               thinkingLevel,
               disabledBuiltinTools,
+              ...(connectorToolPolicy ? { connectorToolPolicy } : {}),
             },
           });
           const thread = await tx.thread.create({

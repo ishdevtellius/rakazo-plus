@@ -344,6 +344,9 @@ const SettingsOverlay = lazyOverlay(() =>
 const PeerMessagesOverlay = lazyOverlay(() =>
   import("./PeerMessagesOverlay").then((module) => module.PeerMessagesOverlay),
 );
+const BotTemplatesOverlay = lazyOverlay(() =>
+  import("./BotTemplatesOverlay").then((module) => module.BotTemplatesOverlay),
+);
 const PluginsOverlay = lazyOverlay(() =>
   import("./PluginsOverlay").then((module) => module.PluginsOverlay),
 );
@@ -678,6 +681,7 @@ function SpaceShell() {
   const [draggedBotId, setDraggedBotId] = useState<string | null>(null);
   const [rosterDropKey, setRosterDropKey] = useState<string | null>(null);
   const [createMenuOpen, setCreateMenuOpen] = useState(false);
+  const [templatesOpen, setTemplatesOpen] = useState(false);
   const [botsSidebarCollapsed, setBotsSidebarCollapsed] = useState(false);
   const focusPromptAbortRef = useRef<AbortController | null>(null);
   const focusPromptBotIdRef = useRef<string | null>(null);
@@ -3163,6 +3167,11 @@ function SpaceShell() {
                       setMobileSidebarOpen(false);
                       setPanel("create");
                     }}
+                    onOpenTemplates={() => {
+                      setCreateMenuOpen(false);
+                      setMobileSidebarOpen(false);
+                      setTemplatesOpen(true);
+                    }}
                     onOpenBot={(id) => {
                       setCreateMenuOpen(false);
                       setMobileSidebarOpen(false);
@@ -4939,6 +4948,21 @@ function SpaceShell() {
           />
         ) : null}
 
+        {templatesOpen ? (
+          <BotTemplatesOverlay
+            existingNames={bots.map((item) => item.name)}
+            onClose={() => setTemplatesOpen(false)}
+            onInstalled={(bot) => {
+              botsRefreshEpoch.current += 1;
+              setBots((current) =>
+                current.some((item) => item.id === bot.id) ? current : [bot, ...current],
+              );
+              setTemplatesOpen(false);
+              navigate(`/app/${bot.id}`);
+              void refreshBots().catch(() => undefined);
+            }}
+          />
+        ) : null}
         {pluginsOpen ? (
           <PluginsOverlay
             onConnectedAppsChange={setFooterLogos}

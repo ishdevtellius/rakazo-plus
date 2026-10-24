@@ -322,7 +322,8 @@ const NO_MANAGED_AUTH_CODE = 4308;
 
 export function explainComposioAuthError(error: unknown, provider: string): string | undefined {
   const text = error instanceof Error ? error.message : String(error);
-  if (!text.includes("NoManagedAuth") && !text.includes(`"code":${NO_MANAGED_AUTH_CODE}`)) return undefined;
+  if (!text.includes("NoManagedAuth") && !text.includes(`"code":${NO_MANAGED_AUTH_CODE}`))
+    return undefined;
   return (
     `Composio has no shared sign-in for "${provider}". Create an auth config for it in the Composio dashboard ` +
     `(Auth Configs, Create, ${provider}), then set COMPOSIO_AUTH_CONFIGS='{"${provider}":"ac_..."}' in .env and restart the api.`
@@ -337,7 +338,9 @@ export class ComposioConnector implements ComposioProvider {
     // Composio rejects an override for a toolkit that is not enabled in the session (error 4307), and that fails
     // every call in the session, so a session only gets the overrides for toolkits it actually enables.
     const enabled = new Set(onlyToolkits.map((slug) => composioSlugKey(slug)));
-    return Object.fromEntries(Object.entries(all).filter(([slug]) => enabled.has(composioSlugKey(slug))));
+    return Object.fromEntries(
+      Object.entries(all).filter(([slug]) => enabled.has(composioSlugKey(slug))),
+    );
   }
   private client: Composio | undefined;
   private readonly catalogSessions = new Map<string, string>();
@@ -446,6 +449,31 @@ export class ComposioConnector implements ComposioProvider {
     return filterCatalog(mergeCatalogWithConnected(directory, connected), query ?? "").map(
       (item) => ({ ...item, connectorId: "composio" }),
     );
+  }
+
+  private readonly toolkitToolCache = new Map<
+    string,
+    { at: number; tools: Array<{ slug: string; name: string; description: string }> }
+  >();
+
+  /** Every tool one Composio app offers (listing only), cached for ten minutes. */
+  async listToolkitTools(
+    _context: AdapterContext,
+    toolkit: string,
+  ): Promise<Array<{ slug: string; name: string; description: string }>> {
+    const key = toolkit.trim().toLowerCase();
+    if (!key) return [];
+    const cached = this.toolkitToolCache.get(key);
+    if (cached && Date.now() - cached.at < 10 * 60_000) return cached.tools;
+    const raw = await this.sdk().tools.getRawComposioTools({ toolkits: [key], limit: 1000 });
+    const tools = (Array.isArray(raw) ? raw : []).map((tool) => ({
+      slug: tool.slug,
+      name: tool.name,
+      description: (tool.description ?? "").slice(0, 300),
+    }));
+    tools.sort((left, right) => left.slug.localeCompare(right.slug));
+    this.toolkitToolCache.set(key, { at: Date.now(), tools });
+    return tools;
   }
 
   async warmDirectory(): Promise<void> {
@@ -585,7 +613,9 @@ export class ComposioConnector implements ComposioProvider {
       if (isNoAuthToolkitError(error)) {
         return { authorizationUrl: null, state: request.provider };
       }
-      throw new Error(explainComposioAuthError(error, request.provider) ?? sanitizeComposioError(error));
+      throw new Error(
+        explainComposioAuthError(error, request.provider) ?? sanitizeComposioError(error),
+      );
     }
   }
 

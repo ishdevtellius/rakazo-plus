@@ -79,6 +79,7 @@ import {
   listBotSecretMetadata,
   listPiCatalog,
   listScratchpadItems,
+  listVaultLogins,
   McpOAuthBroker,
   mapScratchpadItem,
   modelCredentialAuthKindsForSpace,
@@ -99,8 +100,10 @@ import {
   probeCatalogProviderModels,
   probeOpenAiCompatibleModels,
   provisionComputer,
+  putVaultLogin,
   queueComputerUpdate,
   releaseComputerExecutionLease,
+  removeVaultLogin,
   replaceComputer,
   resolveAutoReviewChecker,
   resolveBotUploadPath,
@@ -117,6 +120,7 @@ import {
   selectDefaultCredentialId,
   serializeModelSecret,
   settleCallRequest,
+  setVaultLoginAccess,
   stableStringify,
   storeBotSecret,
   storedOpenAiCompatibleProbeKey,
@@ -157,6 +161,7 @@ import {
   IntegrationProviderIdSchema,
   isDeletableMemoryDocument,
   OPENAI_COMPATIBLE_PROVIDER_ID,
+  parseConnectorToolPolicy,
   parseTicketRef,
   storedPiProviderIds,
   usableModelId,
@@ -171,6 +176,7 @@ import {
   displayName,
   expandSkillReferencesInPrompt,
   hasMixedOneShotSchedule,
+  isConnectorWriteName,
   isOneShotRoutineCrons,
   nextCronDateAcrossStrict,
   QUEUE_HOLDING_RUN_STATUSES,
@@ -665,6 +671,11 @@ const BOT_SECRET_INPUT_ERRORS = [
   "Credential cannot be used with this authentication method",
   "Remove the existing credential before changing its destination",
   "Credential limit reached",
+  "Vault logins can only be used",
+  "Remove the existing login",
+  "Login limit reached",
+  "Login not found",
+  "Bot not found",
 ];
 
 /** Map credential validation failures to a bad request without echoing the submitted value. */
@@ -683,6 +694,10 @@ function mapBotSecretStoreError(error: unknown): unknown {
     });
   }
   return error;
+}
+
+function vaultScope(actor: Actor) {
+  return { userId: actor.userId, spaceId: actor.spaceId };
 }
 
 function botSecretScope(actor: Actor, botId: string) {
@@ -1738,6 +1753,7 @@ export function createRouter(deps: RouterDeps) {
             modelId: source.modelId,
             thinkingLevel: source.thinkingLevel,
             disabledBuiltinTools: source.disabledBuiltinTools,
+            connectorToolPolicy: parseConnectorToolPolicy(source.connectorToolPolicy),
           })
           .catch((error: unknown) => {
             throw mapSpaceLifecycleError(error);
@@ -1838,6 +1854,12 @@ export function createRouter(deps: RouterDeps) {
               : {}),
             ...(input.disabledBuiltinTools !== undefined
               ? { disabledBuiltinTools: input.disabledBuiltinTools }
+              : {}),
+            ...(input.connectorToolPolicy !== undefined
+              ? {
+                  connectorToolPolicy:
+                    (input.connectorToolPolicy as Prisma.InputJsonValue | null) ?? Prisma.DbNull,
+                }
               : {}),
           },
         }).catch((error) => {
@@ -4895,6 +4917,17 @@ export function createRouter(deps: RouterDeps) {
           createdAt: row.createdAt.toISOString(),
         }));
       }),
+      toolkitTools: authed.connections.toolkitTools.handler(async ({ context, input }) => {
+        const provider = deps.connectors.managed(input.connectorId);
+        if (!provider?.listToolkitTools) return [];
+        const tools = await provider
+          .listToolkitTools(
+            connectionContext(context.actor, "connections.tools", context.signal),
+            input.provider,
+          )
+          .catch(() => []);
+        return tools.map((tool) => ({ ...tool, write: isConnectorWriteName(tool.slug) }));
+      }),
       begin: authed.connections.begin.handler(async ({ context, input }) => {
         const connector =
           deps.integrationSettings &&
@@ -5992,6 +6025,41 @@ export function createRouter(deps: RouterDeps) {
         const bot = await repos.getBot(context.actor, input.botId);
         await forgetBotSecret(deps.prisma, botSecretScope(context.actor, bot.id), input.name);
         return { ok: true as const };
+      }),
+    },
+    vault: {
+      list: authed.vault.list.handler(async ({ context }) =>
+        listVaultLogins(deps.prisma, vaultScope(context.actor)),
+      ),
+      put: authed.vault.put.handler(async ({ context, input }) => {
+        try {
+          return await putVaultLogin({
+            prisma: deps.prisma,
+            secretStore: deps.secrets,
+            scope: vaultScope(context.actor),
+            name: input.name,
+            origin: input.origin,
+            value: input.value,
+          });
+        } catch (error) {
+          throw mapBotSecretStoreError(error);
+        }
+      }),
+      remove: authed.vault.remove.handler(async ({ context, input }) => {
+        await removeVaultLogin(deps.prisma, deps.secrets, vaultScope(context.actor), input.id);
+        return { ok: true as const };
+      }),
+      setAccess: authed.vault.setAccess.handler(async ({ context, input }) => {
+        try {
+          return await setVaultLoginAccess(
+            deps.prisma,
+            vaultScope(context.actor),
+            input.id,
+            input.botIds,
+          );
+        } catch (error) {
+          throw mapBotSecretStoreError(error);
+        }
       }),
     },
     approvalRules: {

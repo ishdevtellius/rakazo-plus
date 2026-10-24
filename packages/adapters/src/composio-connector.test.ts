@@ -1316,8 +1316,48 @@ describe("Composio auth configs", () => {
 
   it("turns Composio's NoManagedAuth error into setup steps", async () => {
     const { explainComposioAuthError } = await import("./composio-connector.js");
-    const msg = explainComposioAuthError(new Error('400 {"error":{"slug":"ToolRouterV2_NoManagedAuth","code":4308}}'), "snowflake");
+    const msg = explainComposioAuthError(
+      new Error('400 {"error":{"slug":"ToolRouterV2_NoManagedAuth","code":4308}}'),
+      "snowflake",
+    );
     expect(msg).toContain("COMPOSIO_AUTH_CONFIGS");
     expect(explainComposioAuthError(new Error("other"), "snowflake")).toBeUndefined();
+  });
+});
+
+describe("ComposioConnector.listToolkitTools", () => {
+  const context = { userId: "u" } as AdapterContext;
+
+  it("returns an app's tools sorted, trims long descriptions and caches the listing", async () => {
+    const connector = new ComposioConnector("ak_test");
+    const raw = vi.fn(async () => [
+      { slug: "SLACK_SEND_MESSAGE", name: "Send message", description: "x".repeat(400) },
+      { slug: "SLACK_LIST_CONVERSATIONS", name: "List conversations" },
+    ]);
+    vi.spyOn(connector as unknown as { sdk: () => unknown }, "sdk").mockReturnValue({
+      tools: { getRawComposioTools: raw },
+    });
+
+    const tools = await connector.listToolkitTools(context, " Slack ");
+    expect(raw).toHaveBeenCalledWith({ toolkits: ["slack"], limit: 1000 });
+    expect(tools.map((tool) => tool.slug)).toEqual([
+      "SLACK_LIST_CONVERSATIONS",
+      "SLACK_SEND_MESSAGE",
+    ]);
+    expect(tools[0]?.description).toBe("");
+    expect(tools[1]?.description).toHaveLength(300);
+
+    await connector.listToolkitTools(context, "slack");
+    expect(raw).toHaveBeenCalledTimes(1);
+  });
+
+  it("lists nothing for a blank app name", async () => {
+    const connector = new ComposioConnector("ak_test");
+    const raw = vi.fn(async () => []);
+    vi.spyOn(connector as unknown as { sdk: () => unknown }, "sdk").mockReturnValue({
+      tools: { getRawComposioTools: raw },
+    });
+    expect(await connector.listToolkitTools(context, "  ")).toEqual([]);
+    expect(raw).not.toHaveBeenCalled();
   });
 });

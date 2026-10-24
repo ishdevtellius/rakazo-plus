@@ -7,6 +7,7 @@ import {
   Cpu,
   CreditCard,
   Gauge,
+  KeyRound,
   Monitor,
   Settings,
   ShieldCheck,
@@ -30,6 +31,7 @@ import {
 import { BillingSettingsPanel } from "./BillingSettingsPanel";
 import { MemorySettingsOverlay } from "./MemorySettingsOverlay";
 import { ModelSettingsOverlay } from "./ModelSettingsOverlay";
+import { VaultSettingsPanel } from "./VaultSettingsPanel";
 import { VoiceSettingsOverlay } from "./VoiceSettingsOverlay";
 
 export type SettingsSection =
@@ -38,6 +40,7 @@ export type SettingsSection =
   | "memory"
   | "voice"
   | "confirmations"
+  | "vault"
   | "usage"
   | "computer"
   | "billing"
@@ -49,6 +52,7 @@ const SPACE_SECTIONS: ReadonlySet<SettingsSection> = new Set([
   "memory",
   "voice",
   "confirmations",
+  "vault",
 ]);
 
 type NavItem = {
@@ -204,6 +208,7 @@ export function SettingsOverlay({
     { id: "memory", label: t`Memory`, icon: Brain },
     { id: "voice", label: t`Voice`, icon: Volume2 },
     { id: "confirmations", label: t`Confirmations`, icon: ShieldCheck },
+    { id: "vault", label: t`Vault`, icon: KeyRound },
     { id: "usage", label: t`Usage`, icon: Gauge },
     ...(showComputer ? [{ id: "computer" as const, label: t`Computer`, icon: Monitor }] : []),
     ...(billingEnabled ? [{ id: "billing" as const, label: t`Billing`, icon: CreditCard }] : []),
@@ -346,6 +351,7 @@ export function SettingsOverlay({
                   />
                 ) : null}
                 {section === "confirmations" ? <ApprovalRulesSettings /> : null}
+                {section === "vault" ? <VaultSettingsPanel /> : null}
                 {section === "usage" ? (
                   <UsageSettingsPanel usage={usage} panelRef={usageRef} />
                 ) : null}

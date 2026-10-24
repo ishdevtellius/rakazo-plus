@@ -45,6 +45,11 @@ msgstr "{0} ({1} से अधिक)"
 msgid "{0} {unitLabel}"
 msgstr "{0} {unitLabel}"
 
+#. placeholder {0}: login.botIds.length
+#: src/pages/VaultSettingsPanel.tsx
+msgid "{0} bots"
+msgstr ""
+
 #. placeholder {0}: block.name
 #: src/pages/shell/message-cards.tsx
 msgid "{0} connection"
@@ -280,10 +285,22 @@ msgstr ""
 msgid "{workingBotName} is working"
 msgstr "{workingBotName} काम कर रहा है"
 
+#: src/pages/PluginsOverlay.tsx
+msgid "{writeToolCount, plural, one {# tool can change data} other {# tools can change data}}"
+msgstr ""
+
 #. placeholder {0}: mention.name
 #: src/pages/Shell.tsx
 msgid "@{0}"
 msgstr "@{0}"
+
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "← All templates"
+msgstr ""
+
+#: src/pages/VaultSettingsPanel.tsx
+msgid "1 bot"
+msgstr ""
 
 #: src/pages/shell/message-cards.tsx
 msgid "A bit of everything"
@@ -310,6 +327,10 @@ msgstr ""
 
 #: src/pages/shell/bot-picker.tsx
 msgid "About spaces"
+msgstr ""
+
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "Access"
 msgstr ""
 
 #: src/components/integrations/IntegrationSetup.tsx
@@ -370,6 +391,7 @@ msgstr "सक्रिय मॉडल"
 msgid "Activity"
 msgstr "गतिविधि"
 
+#: src/pages/BotTemplatesOverlay.tsx
 #: src/pages/ModelBackupsSettings.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/ScratchpadSection.tsx
@@ -434,6 +456,14 @@ msgstr ""
 msgid "Add Executor"
 msgstr "Executor जोड़ें"
 
+#: src/pages/Shell.tsx
+msgid "Add files or photos"
+msgstr ""
+
+#: src/pages/Shell.tsx
+msgid "Add folder"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Add GraphQL"
 msgstr "GraphQL जोड़ें"
@@ -445,6 +475,10 @@ msgstr "GraphQL एंडपॉइंट जोड़ें"
 #: src/pages/ScratchpadSection.tsx
 msgid "Add item"
 msgstr "आइटम जोड़ें"
+
+#: src/pages/VaultSettingsPanel.tsx
+msgid "Add login"
+msgstr ""
 
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -467,6 +501,10 @@ msgstr "सर्वर जोड़ें"
 msgid "Add server URL"
 msgstr ""
 
+#: src/pages/Shell.tsx
+msgid "Add to message"
+msgstr ""
+
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Add to routine"
 msgstr "रूटीन में जोड़ें"
@@ -483,6 +521,7 @@ msgstr ""
 msgid "Added"
 msgstr ""
 
+#: src/pages/BotTemplatesOverlay.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Adding…"
@@ -514,6 +553,10 @@ msgstr ""
 #: src/pages/McpServersOverlay.tsx
 msgid "Agents:"
 msgstr "एजेंट:"
+
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "All"
+msgstr ""
 
 #: src/pages/Artifacts.tsx
 msgid "All bots"
@@ -565,6 +608,14 @@ msgstr ""
 #: src/components/AskCard.tsx
 msgid "Allowed once"
 msgstr "एक बार अनुमति दी गई"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Allowed write tools"
+msgstr ""
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Allowed, with normal approvals"
+msgstr ""
 
 #: src/pages/Auth.tsx
 msgid "Already have an account?"
@@ -715,6 +766,10 @@ msgstr "खरीद से पहले पूछें"
 msgid "Ask before sending external email"
 msgstr "बाहरी ईमेल भेजने से पहले पूछें"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Ask me every time"
+msgstr ""
+
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "Ask the server owner to configure this provider."
 msgstr ""
@@ -827,7 +882,12 @@ msgid "Billing"
 msgstr ""
 
 #: src/lib/ticket-status.ts
+#: src/pages/shell/bot-panel.tsx
 msgid "Blocked"
+msgstr ""
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Blocked tools"
 msgstr ""
 
 #: src/components/SidebarFooter.tsx
@@ -868,6 +928,10 @@ msgstr "बॉट स्क्रीन"
 msgid "Bot screen preview"
 msgstr "बॉट स्क्रीन प्रीव्यू"
 
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "Bot templates"
+msgstr ""
+
 #: src/pages/MessagingSettingsOverlay.tsx
 msgid "Bot to link"
 msgstr ""
@@ -884,12 +948,24 @@ msgstr ""
 msgid "Bots are working"
 msgstr "बॉट काम कर रहे हैं"
 
+#: src/pages/VaultSettingsPanel.tsx
+msgid "Bots that may sign in with this login:"
+msgstr ""
+
 #: src/pages/Paywall.tsx
 msgid "Bots with their own computer and browser"
 msgstr ""
 
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Brain label"
+msgstr ""
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Browse an app's tools"
+msgstr ""
+
+#: src/pages/shell/bot-picker.tsx
+msgid "Browse bot templates"
 msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
@@ -921,6 +997,10 @@ msgstr "आपको कॉल कर रहा है…"
 msgid "Calling…"
 msgstr "कॉल हो रही है…"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "can change data"
+msgstr ""
+
 #: src/App.tsx
 msgid "Can't reach the server."
 msgstr "सर्वर तक नहीं पहुंचा जा सका।"
@@ -941,6 +1021,7 @@ msgstr "तस्वीरें नहीं पढ़ सकता"
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/VaultSettingsPanel.tsx
 msgid "Cancel"
 msgstr "रद्द करें"
 
@@ -976,6 +1057,11 @@ msgstr ""
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Change password"
 msgstr "पासवर्ड बदलें"
+
+#: src/pages/PluginsOverlay.tsx
+#: src/pages/shell/bot-panel.tsx
+msgid "Changes data"
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Changing…"
@@ -1063,6 +1149,10 @@ msgstr "बॉट का आकार और रंग चुनें, या �
 msgid "Choose a bot…"
 msgstr ""
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Choose a connected app"
+msgstr ""
+
 #: src/pages/Auth.tsx
 msgid "Choose a new password"
 msgstr "नया पासवर्ड चुनें"
@@ -1070,6 +1160,10 @@ msgstr "नया पासवर्ड चुनें"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Choose file"
 msgstr "फ़ाइल चुनें"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Choose which ones each bot may use in the bot's settings."
+msgstr ""
 
 #: src/pages/shell/dialogs.tsx
 msgid "Clear"
@@ -1114,6 +1208,10 @@ msgstr ""
 #: src/pages/WindowChrome.tsx
 msgid "Close"
 msgstr "बंद करें"
+
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "Close bot templates"
+msgstr ""
 
 #: src/pages/shell/message-cards.tsx
 msgid "Close chart"
@@ -1196,6 +1294,10 @@ msgstr "रंग"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Color {color}"
 msgstr "रंग {color}"
+
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "Comes with a routine that is switched off until you turn it on."
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Comfortable"
@@ -1364,6 +1466,14 @@ msgstr "कनेक्शन परीक्षण विफल रहा।"
 msgid "Connection to {0} is still pending. You can close this and check again."
 msgstr "{0} से कनेक्शन अभी लंबित है। आप इसे बंद करके बाद में जांच सकते हैं।"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Connector tools that change data"
+msgstr ""
+
+#: src/pages/Shell.tsx
+msgid "Connectors"
+msgstr ""
+
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
 msgid "Context limit"
@@ -1418,6 +1528,10 @@ msgstr "इस सर्वर को अनुमोदित नहीं क�
 #: src/pages/shell/message-cards.tsx
 msgid "Could not authorize this app"
 msgstr "इस ऐप को ऑथराइज़ नहीं किया जा सका"
+
+#: src/pages/VaultSettingsPanel.tsx
+msgid "Could not change access"
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Could not change password"
@@ -1630,6 +1744,10 @@ msgstr "साइन इन के विकल्प लोड नहीं ह
 msgid "Could not load skill"
 msgstr "स्किल लोड नहीं हो सकी"
 
+#: src/pages/VaultSettingsPanel.tsx
+msgid "Could not load the vault."
+msgstr ""
+
 #: src/pages/Artifacts.tsx
 msgid "Could not load this artifact."
 msgstr ""
@@ -1693,6 +1811,10 @@ msgstr "नियम हटाया नहीं जा सका"
 
 #: src/pages/shell/bot-credentials.tsx
 msgid "Could not remove the credential"
+msgstr ""
+
+#: src/pages/VaultSettingsPanel.tsx
+msgid "Could not remove the login"
 msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
@@ -1772,6 +1894,10 @@ msgstr "वह आवाज़ सहेजी नहीं जा सकी"
 
 #: src/pages/shell/bot-credentials.tsx
 msgid "Could not save the credential"
+msgstr ""
+
+#: src/pages/VaultSettingsPanel.tsx
+msgid "Could not save the login"
 msgstr ""
 
 #: src/pages/shell/message-cards.tsx
@@ -2253,6 +2379,7 @@ msgid "Enter a password"
 msgstr "पासवर्ड दर्ज करें"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultSettingsPanel.tsx
 msgid "Enter a username and password"
 msgstr ""
 
@@ -2383,6 +2510,10 @@ msgstr "विफल।"
 msgid "Failure handling"
 msgstr "विफलता प्रबंधन"
 
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "Featured"
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "Fields that mark a change"
 msgstr "बदलाव दर्शाने वाले फ़ील्ड"
@@ -2405,6 +2536,10 @@ msgstr ""
 
 #: src/pages/Artifacts.tsx
 msgid "Filter by date"
+msgstr ""
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Filter tools"
 msgstr ""
 
 #: src/pages/Artifacts.tsx
@@ -2676,6 +2811,10 @@ msgstr "निर्देशों का इतिहास"
 msgid "Instructions"
 msgstr "निर्देश"
 
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "Instructions it starts with"
+msgstr ""
+
 #: src/components/AskCard.tsx
 msgid "Instructions updated"
 msgstr "निर्देश अपडेट किए गए"
@@ -2768,6 +2907,10 @@ msgstr ""
 msgid "Leave"
 msgstr ""
 
+#: src/pages/Shell.tsx
+msgid "Left out of the folder: {left}"
+msgstr ""
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Lets this bot organize, retune and schedule the bots it creates. You approve each change."
 msgstr "इस बॉट को अपने बनाए बॉट व्यवस्थित करने, समायोजित करने और शेड्यूल करने देता है। हर बदलाव को आप मंज़ूरी देते हैं।"
@@ -2846,6 +2989,7 @@ msgid "Loading rules…"
 msgstr "नियम लोड हो रहे हैं…"
 
 #: src/pages/PluginsOverlay.tsx
+#: src/pages/shell/bot-panel.tsx
 msgid "Loading tools…"
 msgstr ""
 
@@ -2862,6 +3006,7 @@ msgstr "आवाज़ प्रोवाइडर्स लोड हो र�
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/RoutineRunHistory.tsx
 #: src/pages/Shell.tsx
+#: src/pages/VaultSettingsPanel.tsx
 msgid "Loading…"
 msgstr "लोड हो रहा है…"
 
@@ -2898,6 +3043,7 @@ msgid "Low"
 msgstr ""
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultSettingsPanel.tsx
 msgid "Lowercase letters, numbers, hyphens and underscores, starting with a letter."
 msgstr ""
 
@@ -3091,6 +3237,7 @@ msgstr "मिनट"
 msgid "Missed call"
 msgstr "मिस्ड कॉल"
 
+#: src/pages/BotTemplatesOverlay.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/RoutineEditor.tsx
@@ -3185,6 +3332,7 @@ msgstr "माइक बंद है"
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/VaultSettingsPanel.tsx
 msgid "Name"
 msgstr "नाम"
 
@@ -3198,6 +3346,10 @@ msgstr "इस समूह को नाम दें"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Name this routine"
+msgstr ""
+
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "Needs"
 msgstr ""
 
 #: src/lib/roster-status.ts
@@ -3215,6 +3367,14 @@ msgstr "नियंत्रण लेना ज़रूरी"
 #: src/lib/roster-status.ts
 #: src/pages/Shell.tsx
 msgid "Needs you"
+msgstr ""
+
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "Needs:"
+msgstr ""
+
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "Never without your yes"
 msgstr ""
 
 #: src/pages/shell/bot-panel.tsx
@@ -3255,6 +3415,10 @@ msgstr ""
 msgid "No agent connections yet."
 msgstr ""
 
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "No apps"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "No apps match your search."
 msgstr "आपकी खोज से कोई ऐप मेल नहीं खाता।"
@@ -3280,6 +3444,10 @@ msgstr ""
 msgid "No bots match"
 msgstr ""
 
+#: src/pages/VaultSettingsPanel.tsx
+msgid "No bots yet."
+msgstr ""
+
 #: src/pages/MessagingSettingsOverlay.tsx
 msgid "No chat apps linked yet."
 msgstr ""
@@ -3290,6 +3458,10 @@ msgstr ""
 
 #: src/pages/MessagingSettingsOverlay.tsx
 msgid "No group chats yet."
+msgstr ""
+
+#: src/pages/VaultSettingsPanel.tsx
+msgid "No logins saved yet."
 msgstr ""
 
 #: src/components/AskCard.tsx
@@ -3332,6 +3504,10 @@ msgstr "कोई मॉडल कैटलॉग उपलब्ध नही�
 msgid "No models listed."
 msgstr "कोई मॉडल सूचीबद्ध नहीं।"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "No policy, approvals only"
+msgstr ""
+
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "No providers found."
 msgstr "कोई प्रोवाइडर नहीं मिला।"
@@ -3361,12 +3537,20 @@ msgstr "अभी तक कोई स्किल नहीं"
 msgid "No team conversations yet."
 msgstr ""
 
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "No templates match."
+msgstr ""
+
 #: src/pages/Board.tsx
 msgid "No tickets yet"
 msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "No tools available."
+msgstr ""
+
+#: src/pages/shell/bot-panel.tsx
+msgid "No tools found for this app."
 msgstr ""
 
 #: src/pages/RoutineEditor.tsx
@@ -3564,6 +3748,7 @@ msgstr "पार्क करें"
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultSettingsPanel.tsx
 msgid "Password"
 msgstr "पासवर्ड"
 
@@ -3718,9 +3903,22 @@ msgstr "प्रतिक्रिया दें"
 msgid "Reactions"
 msgstr "प्रतिक्रियाएँ"
 
+#: src/pages/PluginsOverlay.tsx
+#: src/pages/shell/bot-panel.tsx
+msgid "Read only"
+msgstr ""
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Read replies aloud"
 msgstr "उत्तर पढ़कर सुनाएं"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Reading (list, get, search) always works. Sending, posting, creating and deleting follow this setting, except for the tools you allow below."
+msgstr ""
+
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "Ready-made bots with their instructions written. They start read-only: changes to connected apps are blocked until you allow them in the bot's settings."
+msgstr ""
 
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
@@ -3847,6 +4045,7 @@ msgstr "फिर से लोड करें"
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/ScratchpadSection.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultSettingsPanel.tsx
 msgid "Remove"
 msgstr "हटाएं"
 
@@ -3858,6 +4057,11 @@ msgstr "{0} हटाएं"
 #. placeholder {0}: bot.name
 #: src/pages/GroupPanel.tsx
 msgid "Remove {0} from the group"
+msgstr ""
+
+#. placeholder {0}: login.name
+#: src/pages/VaultSettingsPanel.tsx
+msgid "Remove {0}? No bot will be able to use it."
 msgstr ""
 
 #: src/pages/ModelBackupsSettings.tsx
@@ -3928,6 +4132,10 @@ msgstr ""
 #: src/pages/ScratchpadSection.tsx
 msgid "Reopen"
 msgstr "पुनः खोलें"
+
+#: src/pages/VaultSettingsPanel.tsx
+msgid "Replace"
+msgstr ""
 
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Replace API key"
@@ -4072,6 +4280,10 @@ msgstr ""
 msgid "Routine"
 msgstr "रूटीन"
 
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "Routine (created switched off)"
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "Routines"
 msgstr "रूटीन्स"
@@ -4135,6 +4347,14 @@ msgstr "बैकअप सहेजें"
 
 #: src/pages/shell/bot-credentials.tsx
 msgid "Save credential"
+msgstr ""
+
+#: src/pages/VaultSettingsPanel.tsx
+msgid "Save login"
+msgstr ""
+
+#: src/pages/VaultSettingsPanel.tsx
+msgid "Save new login"
 msgstr ""
 
 #: src/pages/shell/bot-credentials.tsx
@@ -4226,6 +4446,10 @@ msgstr "प्रोवाइडर्स खोजें"
 #: src/pages/Shell.tsx
 msgid "Search runs"
 msgstr "रन खोजें"
+
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "Search templates"
+msgstr ""
 
 #. placeholder {0}: filters.query.trim()
 #: src/pages/ActivityList.tsx
@@ -4430,6 +4654,7 @@ msgid "Sign up"
 msgstr "साइन अप करें"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultSettingsPanel.tsx
 msgid "Site"
 msgstr ""
 
@@ -4458,6 +4683,10 @@ msgstr ""
 
 #: src/pages/RoutineEditor.tsx
 msgid "Slack not enabled"
+msgstr ""
+
+#: src/pages/Shell.tsx
+msgid "Slash commands"
 msgstr ""
 
 #: src/components/composer/HoldToTalk.tsx
@@ -4675,6 +4904,10 @@ msgstr ""
 msgid "The connection timed out."
 msgstr "कनेक्शन का समय समाप्त हो गया।"
 
+#: src/pages/Shell.tsx
+msgid "The folder has no files that can be attached."
+msgstr ""
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "The model provider returned an error."
@@ -4846,6 +5079,10 @@ msgstr "टूल स्रोत"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Tools"
+msgstr ""
+
+#: src/pages/shell/bot-panel.tsx
+msgid "tools on"
 msgstr ""
 
 #: src/components/composer/HoldToTalk.tsx
@@ -5057,6 +5294,7 @@ msgstr "अपनी कुंजी इस्तेमाल करें"
 
 #: src/components/AskCard.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultSettingsPanel.tsx
 msgid "Username"
 msgstr ""
 
@@ -5072,6 +5310,11 @@ msgstr ""
 msgid "Values are encrypted and never shown again."
 msgstr "मान एन्क्रिप्ट किए जाते हैं और दोबारा नहीं दिखाए जाते।"
 
+#: src/pages/SettingsOverlay.tsx
+#: src/pages/VaultSettingsPanel.tsx
+msgid "Vault"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Verify and add"
 msgstr "पुष्टि करके जोड़ें"
@@ -5082,6 +5325,10 @@ msgstr "पुष्टि की जा रही है…"
 
 #: src/pages/Artifacts.tsx
 msgid "Version"
+msgstr ""
+
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "View all"
 msgstr ""
 
 #: src/pages/RoutineRunHistory.tsx
@@ -5120,6 +5367,10 @@ msgstr ""
 
 #: src/pages/shell/bot-credentials.tsx
 msgid "Website login"
+msgstr ""
+
+#: src/pages/VaultSettingsPanel.tsx
+msgid "Website logins you save once and share with the bots you choose. Passwords are encrypted and never shown again, and a bot can only type one into its saved site, over HTTPS. The bot never sees the password."
 msgstr ""
 
 #: src/lib/billing.ts
@@ -5206,6 +5457,10 @@ msgstr "कल"
 msgid "You"
 msgstr "आप"
 
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "You can change anything here after adding it, in the bot's settings."
+msgstr ""
+
 #: src/pages/McpOAuthCallback.tsx
 msgid "You can close this tab if it does not redirect automatically."
 msgstr "अगर यह अपने आप रीडायरेक्ट न हो तो आप यह टैब बंद कर सकते हैं।"
@@ -5226,6 +5481,10 @@ msgstr "नियंत्रण आपके पास है"
 #: src/lib/run-error.ts
 msgid "Your Anthropic"
 msgstr "आपका Anthropic"
+
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "Your default model"
+msgstr ""
 
 #: src/pages/Auth.tsx
 msgid "Your email address"
@@ -5253,31 +5512,3 @@ msgstr "आपका OpenRouter"
 #: src/pages/Welcome.tsx
 msgid "Your team of always-on agents<0/>that you can give real work to."
 msgstr "हमेशा चालू रहने वाले एजेंटों की आपकी टीम<0/>जिन्हें आप असली काम सौंप सकते हैं।"
-
-#: src/pages/Shell.tsx
-msgid "Add files or photos"
-msgstr ""
-
-#: src/pages/Shell.tsx
-msgid "Add folder"
-msgstr ""
-
-#: src/pages/Shell.tsx
-msgid "Slash commands"
-msgstr ""
-
-#: src/pages/Shell.tsx
-msgid "Connectors"
-msgstr ""
-
-#: src/pages/Shell.tsx
-msgid "Add to message"
-msgstr ""
-
-#: src/pages/Shell.tsx
-msgid "The folder has no files that can be attached."
-msgstr ""
-
-#: src/pages/Shell.tsx
-msgid "Left out of the folder: {left}"
-msgstr ""

@@ -319,3 +319,25 @@ export const SecretHttpRequest = z
     (request) => request.body === undefined || !["GET", "HEAD"].includes(request.method),
     "This method cannot have a body",
   );
+
+/**
+ * A website login saved once for the account. `botIds` are the bots allowed to sign in with it;
+ * the password is never part of any read.
+ */
+export const VaultLoginMetadata = z.object({
+  id: Id,
+  name: StoredBotSecretName,
+  origin: z.string(),
+  botIds: z.array(Id),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+export type VaultLoginMetadata = z.infer<typeof VaultLoginMetadata>;
+
+/** `value` is the encoded username and password pair, as for a bot's own website login. */
+export const VaultLoginPutInput = z.object({
+  name: BotSecretName,
+  origin: z.string().min(1).max(2048),
+  value: z.string().min(1).max(BOT_SECRET_VALUE_MAX_LENGTH),
+});
+export type VaultLoginPutInput = z.infer<typeof VaultLoginPutInput>;

@@ -3,6 +3,9 @@ import type {
   AgentSkillCatalogEntry,
   Bot,
   ComputerMode,
+  ConnectionTool,
+  ConnectorToolPolicy,
+  ConnectorWriteMode,
   Me,
   ModelCatalogEntry,
   ModelCredential,
@@ -226,6 +229,7 @@ export function BotSettings({
     modelId?: string | null;
     thinkingLevel?: ThinkingLevel | null;
     disabledBuiltinTools?: string[];
+    connectorToolPolicy?: ConnectorToolPolicy | null;
   }) => Promise<void>;
   onExport: () => Promise<void>;
   onClear: () => void;
@@ -250,6 +254,35 @@ export function BotSettings({
   const [autoSpeak, setAutoSpeak] = useState(bot.autoSpeak);
   const [fleetManagement, setFleetManagement] = useState(bot.fleetManagement);
   useEffect(() => setFleetManagement(bot.fleetManagement), [bot.fleetManagement]);
+  const [connectorPolicy, setConnectorPolicy] = useState<ConnectorToolPolicy | null>(
+    bot.connectorToolPolicy ?? null,
+  );
+  useEffect(() => setConnectorPolicy(bot.connectorToolPolicy ?? null), [bot.connectorToolPolicy]);
+  const [allowToolDraft, setAllowToolDraft] = useState("");
+  const [blockToolDraft, setBlockToolDraft] = useState("");
+  const hasConnectorPolicy = connectorPolicy !== null;
+  const [toolApps, setToolApps] = useState<string[]>([]);
+  const [toolApp, setToolApp] = useState("");
+  const [appTools, setAppTools] = useState<ConnectionTool[] | null>(null);
+  const [appToolsLoading, setAppToolsLoading] = useState(false);
+  const [toolFilter, setToolFilter] = useState("");
+  useEffect(() => {
+    if (!hasConnectorPolicy || toolApps.length > 0) return;
+    let live = true;
+    void rpc.connections
+      .list()
+      .then((rows) => {
+        if (!live) return;
+        const providers = rows
+          .filter((row) => row.status === "connected")
+          .map((row) => row.provider);
+        setToolApps([...new Set(providers)].sort());
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [hasConnectorPolicy, toolApps.length]);
   const [voiceId, setVoiceId] = useState(bot.voiceId ?? "");
   const [voices, setVoices] = useState<VoiceInfo[]>([]);
   const [modelKey, setModelKey] = useState(
@@ -345,6 +378,7 @@ export function BotSettings({
     color?: string;
     notifyOnFinish?: boolean;
     fleetManagement?: boolean;
+    connectorToolPolicy?: ConnectorToolPolicy | null;
     disabledBuiltinTools?: string[];
     baseDisabledBuiltinTools?: string[];
   }) {
@@ -353,6 +387,10 @@ export function BotSettings({
       setError(null);
       if (patchOverrides?.fleetManagement !== undefined) {
         await onSave({ fleetManagement: patchOverrides.fleetManagement });
+        return;
+      }
+      if (patchOverrides?.connectorToolPolicy !== undefined) {
+        await onSave({ connectorToolPolicy: patchOverrides.connectorToolPolicy });
         return;
       }
       const selected = selectedModel;
@@ -459,6 +497,64 @@ export function BotSettings({
     void enqueueSave({ disabledBuiltinTools: next });
   }
 
+  async function chooseToolApp(provider: string) {
+    setToolApp(provider);
+    setAppTools(null);
+    setToolFilter("");
+    if (!provider) return;
+    setAppToolsLoading(true);
+    try {
+      setAppTools(await rpc.connections.toolkitTools({ provider }));
+    } catch {
+      setAppTools([]);
+    } finally {
+      setAppToolsLoading(false);
+    }
+  }
+
+  function connectorToolEnabled(tool: ConnectionTool) {
+    if (!connectorPolicy) return true;
+    const key = tool.slug.toLowerCase();
+    if (connectorPolicy.blockTools.some((entry) => entry.toLowerCase() === key)) return false;
+    if (!tool.write || connectorPolicy.writes !== "block") return true;
+    return connectorPolicy.allowWriteTools.some((entry) => entry.toLowerCase() === key);
+  }
+
+  function toggleConnectorTool(tool: ConnectionTool, enable: boolean) {
+    if (!connectorPolicy) return;
+    const key = tool.slug.toLowerCase();
+    const without = (list: string[]) => list.filter((entry) => entry.toLowerCase() !== key);
+    let allowWriteTools = without(connectorPolicy.allowWriteTools);
+    let blockTools = without(connectorPolicy.blockTools);
+    if (enable) {
+      if (tool.write && connectorPolicy.writes === "block")
+        allowWriteTools = [...allowWriteTools, tool.slug];
+    } else if (!tool.write || connectorPolicy.writes !== "block") {
+      blockTools = [...blockTools, tool.slug];
+    }
+    saveConnectorPolicy({ ...connectorPolicy, allowWriteTools, blockTools });
+  }
+
+  function saveConnectorPolicy(next: ConnectorToolPolicy | null) {
+    setConnectorPolicy(next);
+    void enqueueSave({ connectorToolPolicy: next });
+  }
+
+  function addPolicyTool(list: "allowWriteTools" | "blockTools", raw: string) {
+    const slug = raw.trim();
+    if (!slug || !connectorPolicy) return;
+    if (connectorPolicy[list].some((entry) => entry.toLowerCase() === slug.toLowerCase())) return;
+    saveConnectorPolicy({ ...connectorPolicy, [list]: [...connectorPolicy[list], slug] });
+  }
+
+  function removePolicyTool(list: "allowWriteTools" | "blockTools", slug: string) {
+    if (!connectorPolicy) return;
+    saveConnectorPolicy({
+      ...connectorPolicy,
+      [list]: connectorPolicy[list].filter((entry) => entry !== slug),
+    });
+  }
+
   function enqueueSave(patchOverrides?: {
     name?: string;
     title?: string;
@@ -466,6 +562,7 @@ export function BotSettings({
     color?: string;
     notifyOnFinish?: boolean;
     fleetManagement?: boolean;
+    connectorToolPolicy?: ConnectorToolPolicy | null;
     disabledBuiltinTools?: string[];
   }) {
     // Serialize full-object auto-saves so an older in-flight request cannot
@@ -757,6 +854,182 @@ export function BotSettings({
             />
           </label>
         ))}
+        <label htmlFor={`${ids}-connector-writes`} className={fieldLabelClass}>
+          <Trans>Connector tools that change data</Trans>
+          <NativeSelect
+            id={`${ids}-connector-writes`}
+            className="mt-2 w-full"
+            value={connectorPolicy?.writes ?? "off"}
+            onChange={(event) => {
+              const value = event.target.value;
+              saveConnectorPolicy(
+                value === "off"
+                  ? null
+                  : {
+                      writes: value as ConnectorWriteMode,
+                      allowWriteTools: connectorPolicy?.allowWriteTools ?? [],
+                      blockTools: connectorPolicy?.blockTools ?? [],
+                    },
+              );
+            }}
+          >
+            <NativeSelectOption value="block">{t`Blocked`}</NativeSelectOption>
+            <NativeSelectOption value="ask">{t`Ask me every time`}</NativeSelectOption>
+            <NativeSelectOption value="allow">{t`Allowed, with normal approvals`}</NativeSelectOption>
+            <NativeSelectOption value="off">{t`No policy, approvals only`}</NativeSelectOption>
+          </NativeSelect>
+        </label>
+        <div className="text-[12px] text-muted-foreground/70">
+          <Trans>
+            Reading (list, get, search) always works. Sending, posting, creating and deleting follow
+            this setting, except for the tools you allow below.
+          </Trans>
+        </div>
+        {connectorPolicy ? (
+          <>
+            <label htmlFor={`${ids}-allow-write-tool`} className={fieldLabelClass}>
+              <Trans>Allowed write tools</Trans>
+              <Input
+                id={`${ids}-allow-write-tool`}
+                value={allowToolDraft}
+                placeholder="SLACK_SEND_MESSAGE"
+                spellCheck={false}
+                autoCapitalize="off"
+                autoCorrect="off"
+                onChange={(event) => setAllowToolDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key !== "Enter") return;
+                  event.preventDefault();
+                  addPolicyTool("allowWriteTools", event.currentTarget.value);
+                  setAllowToolDraft("");
+                }}
+                className="mt-1.5 font-mono"
+              />
+            </label>
+            {connectorPolicy.allowWriteTools.map((slug) => (
+              <label
+                key={slug}
+                htmlFor={`${ids}-allow-${slug}`}
+                className="mt-2 flex items-center justify-between gap-3 text-[13px] text-foreground/80"
+              >
+                <span className="font-mono">{slug}</span>
+                <Switch
+                  id={`${ids}-allow-${slug}`}
+                  checked
+                  onCheckedChange={(checked) => {
+                    if (!checked) removePolicyTool("allowWriteTools", slug);
+                  }}
+                />
+              </label>
+            ))}
+            <label htmlFor={`${ids}-block-tool`} className={fieldLabelClass}>
+              <Trans>Blocked tools</Trans>
+              <Input
+                id={`${ids}-block-tool`}
+                value={blockToolDraft}
+                placeholder="SLACK_SEARCH_MESSAGES"
+                spellCheck={false}
+                autoCapitalize="off"
+                autoCorrect="off"
+                onChange={(event) => setBlockToolDraft(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key !== "Enter") return;
+                  event.preventDefault();
+                  addPolicyTool("blockTools", event.currentTarget.value);
+                  setBlockToolDraft("");
+                }}
+                className="mt-1.5 font-mono"
+              />
+            </label>
+            {connectorPolicy.blockTools.map((slug) => (
+              <label
+                key={slug}
+                htmlFor={`${ids}-block-${slug}`}
+                className="mt-2 flex items-center justify-between gap-3 text-[13px] text-foreground/80"
+              >
+                <span className="font-mono">{slug}</span>
+                <Switch
+                  id={`${ids}-block-${slug}`}
+                  checked
+                  onCheckedChange={(checked) => {
+                    if (!checked) removePolicyTool("blockTools", slug);
+                  }}
+                />
+              </label>
+            ))}
+            <label htmlFor={`${ids}-browse-app`} className={fieldLabelClass}>
+              <Trans>Browse an app's tools</Trans>
+              <NativeSelect
+                id={`${ids}-browse-app`}
+                className="mt-2 w-full"
+                value={toolApp}
+                onChange={(event) => void chooseToolApp(event.target.value)}
+              >
+                <NativeSelectOption value="">{t`Choose a connected app`}</NativeSelectOption>
+                {toolApps.map((provider) => (
+                  <NativeSelectOption key={provider} value={provider}>
+                    {provider}
+                  </NativeSelectOption>
+                ))}
+              </NativeSelect>
+            </label>
+            {appToolsLoading ? (
+              <div className="mt-2 text-[12px] text-muted-foreground/70">
+                <Trans>Loading tools…</Trans>
+              </div>
+            ) : null}
+            {appTools ? (
+              <>
+                {appTools.length === 0 ? (
+                  <div className="mt-2 text-[12px] text-muted-foreground/70">
+                    <Trans>No tools found for this app.</Trans>
+                  </div>
+                ) : null}
+                <div className="mt-2 text-[12px] text-muted-foreground/70">
+                  {appTools.filter(connectorToolEnabled).length} / {appTools.length}{" "}
+                  <Trans>tools on</Trans>
+                  {" · "}
+                  {appTools.filter((tool) => tool.write).length} <Trans>can change data</Trans>
+                </div>
+                <Input
+                  value={toolFilter}
+                  placeholder={t`Filter tools`}
+                  aria-label={t`Filter tools`}
+                  spellCheck={false}
+                  onChange={(event) => setToolFilter(event.target.value)}
+                  className="mt-1.5 font-mono"
+                />
+                {appTools
+                  .filter((tool) =>
+                    `${tool.slug} ${tool.name}`
+                      .toLowerCase()
+                      .includes(toolFilter.trim().toLowerCase()),
+                  )
+                  .slice(0, 100)
+                  .map((tool) => (
+                    <label
+                      key={tool.slug}
+                      htmlFor={`${ids}-tool-${tool.slug}`}
+                      title={tool.description}
+                      className="mt-2 flex items-center justify-between gap-3 text-[13px] text-foreground/80"
+                    >
+                      <span className="min-w-0">
+                        <span className="block truncate font-mono">{tool.slug}</span>
+                        <span className="text-[11px] text-muted-foreground/70">
+                          {tool.write ? t`Changes data` : t`Read only`}
+                        </span>
+                      </span>
+                      <Switch
+                        id={`${ids}-tool-${tool.slug}`}
+                        checked={connectorToolEnabled(tool)}
+                        onCheckedChange={(checked) => toggleConnectorTool(tool, checked)}
+                      />
+                    </label>
+                  ))}
+              </>
+            ) : null}
+          </>
+        ) : null}
         {advancedOpened ? <BotCredentialsSection botId={bot.id} /> : null}
       </details>
       {error ? <p className="mt-2 text-[13px] text-destructive">{error}</p> : null}

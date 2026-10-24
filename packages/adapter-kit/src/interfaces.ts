@@ -233,6 +233,11 @@ export interface ManagedConnectorProvider
   listConnectedExternalIds(context: AdapterContext): Promise<string[]>;
   connectionReady(context: AdapterContext, externalId: string): Promise<boolean>;
   warmDirectory?(): Promise<void>;
+  /** The tools one app offers, for the per-bot tool picker. Read-only listing, no account needed. */
+  listToolkitTools?(
+    context: AdapterContext,
+    toolkit: string,
+  ): Promise<Array<{ slug: string; name: string; description: string }>>;
 }
 
 export interface MemoryStore {

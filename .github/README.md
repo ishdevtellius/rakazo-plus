@@ -5,7 +5,7 @@ sandbox supervisor, **plus a few improvements we made**. It contains no bots, ro
 starts empty, and so does this. Create your own bots in your own style.
 
 ## What is different from upstream
-Eight commits on top of upstream commit `faed3f73` (see `git log faed3f73..HEAD`):
+Commits on top of upstream commit `faed3f73` (see `git log faed3f73..HEAD`):
 
 | Change | What you get |
 |---|---|
@@ -15,6 +15,10 @@ Eight commits on top of upstream commit `faed3f73` (see `git log faed3f73..HEAD`
 | Health endpoint | `composio` shows true when a Composio key is actually active |
 | Backup-model failover | A configured backup model now takes over when a ChatGPT-style proxy reports every seat out of credits (HTTP 400 "no provider lists model"), not only on native errors |
 | Local backup script | `infra/compose/backup-local.sh`: a verified Postgres dump plus appdata archive for the image-based local stack |
+| Per-bot connector tool policy | Each bot has a rule for connector tools that change data: **block** (the default for new bots), **ask every time**, or **allow**, plus per-tool allow and block lists. It judges the real tool inside Composio's wrapper, so a blocked tool stays blocked |
+| Tool browser | Integrations and bot settings list every tool of an app, labelled "Read only" or "Changes data", with per-tool switches |
+| Shared vault | Settings > Vault: save a website login once, choose which bots may use it. A bot types it only into the saved HTTPS site and never sees the password |
+| Bot templates gallery | **+ > Browse bot templates**: about 35 generic, ready-made bots in 8 categories with a Featured row, per-category "View all", a detail view with the full instructions, and a "needs these apps" line. Every template starts with changes to connected apps blocked. Add your own in `apps/web/src/lib/bot-templates-catalog.ts` |
 | Translations | The new strings are in all locale catalogs (English text for locales without a translation yet) |
 
 ## Build and run

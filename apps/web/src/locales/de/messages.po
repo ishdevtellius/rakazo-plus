@@ -45,6 +45,11 @@ msgstr "{0} (über {1})"
 msgid "{0} {unitLabel}"
 msgstr "{0} {unitLabel}"
 
+#. placeholder {0}: login.botIds.length
+#: src/pages/VaultSettingsPanel.tsx
+msgid "{0} bots"
+msgstr ""
+
 #. placeholder {0}: block.name
 #: src/pages/shell/message-cards.tsx
 msgid "{0} connection"
@@ -280,10 +285,22 @@ msgstr ""
 msgid "{workingBotName} is working"
 msgstr "{workingBotName} arbeitet"
 
+#: src/pages/PluginsOverlay.tsx
+msgid "{writeToolCount, plural, one {# tool can change data} other {# tools can change data}}"
+msgstr ""
+
 #. placeholder {0}: mention.name
 #: src/pages/Shell.tsx
 msgid "@{0}"
 msgstr "@{0}"
+
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "← All templates"
+msgstr ""
+
+#: src/pages/VaultSettingsPanel.tsx
+msgid "1 bot"
+msgstr ""
 
 #: src/pages/shell/message-cards.tsx
 msgid "A bit of everything"
@@ -310,6 +327,10 @@ msgstr ""
 
 #: src/pages/shell/bot-picker.tsx
 msgid "About spaces"
+msgstr ""
+
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "Access"
 msgstr ""
 
 #: src/components/integrations/IntegrationSetup.tsx
@@ -370,6 +391,7 @@ msgstr "Aktives Modell"
 msgid "Activity"
 msgstr "Aktivität"
 
+#: src/pages/BotTemplatesOverlay.tsx
 #: src/pages/ModelBackupsSettings.tsx
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/ScratchpadSection.tsx
@@ -434,6 +456,14 @@ msgstr ""
 msgid "Add Executor"
 msgstr "Executor hinzufügen"
 
+#: src/pages/Shell.tsx
+msgid "Add files or photos"
+msgstr ""
+
+#: src/pages/Shell.tsx
+msgid "Add folder"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Add GraphQL"
 msgstr "GraphQL hinzufügen"
@@ -445,6 +475,10 @@ msgstr "GraphQL-Endpunkt hinzufügen"
 #: src/pages/ScratchpadSection.tsx
 msgid "Add item"
 msgstr "Element hinzufügen"
+
+#: src/pages/VaultSettingsPanel.tsx
+msgid "Add login"
+msgstr ""
 
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/PluginsOverlay.tsx
@@ -467,6 +501,10 @@ msgstr "Server hinzufügen"
 msgid "Add server URL"
 msgstr ""
 
+#: src/pages/Shell.tsx
+msgid "Add to message"
+msgstr ""
+
 #: src/components/teach/SkillDraftCard.tsx
 msgid "Add to routine"
 msgstr "Zur Routine hinzufügen"
@@ -483,6 +521,7 @@ msgstr ""
 msgid "Added"
 msgstr ""
 
+#: src/pages/BotTemplatesOverlay.tsx
 #: src/pages/McpServersOverlay.tsx
 #: src/pages/PluginsOverlay.tsx
 msgid "Adding…"
@@ -514,6 +553,10 @@ msgstr ""
 #: src/pages/McpServersOverlay.tsx
 msgid "Agents:"
 msgstr "Agents:"
+
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "All"
+msgstr ""
 
 #: src/pages/Artifacts.tsx
 msgid "All bots"
@@ -565,6 +608,14 @@ msgstr ""
 #: src/components/AskCard.tsx
 msgid "Allowed once"
 msgstr "Einmal erlaubt"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Allowed write tools"
+msgstr ""
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Allowed, with normal approvals"
+msgstr ""
 
 #: src/pages/Auth.tsx
 msgid "Already have an account?"
@@ -715,6 +766,10 @@ msgstr "Vor Käufen nachfragen"
 msgid "Ask before sending external email"
 msgstr "Vor dem Senden externer E-Mails nachfragen"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Ask me every time"
+msgstr ""
+
 #: src/components/integrations/IntegrationSetup.tsx
 msgid "Ask the server owner to configure this provider."
 msgstr ""
@@ -827,7 +882,12 @@ msgid "Billing"
 msgstr ""
 
 #: src/lib/ticket-status.ts
+#: src/pages/shell/bot-panel.tsx
 msgid "Blocked"
+msgstr ""
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Blocked tools"
 msgstr ""
 
 #: src/components/SidebarFooter.tsx
@@ -868,6 +928,10 @@ msgstr "Bot-Bildschirm"
 msgid "Bot screen preview"
 msgstr "Bot-Bildschirmvorschau"
 
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "Bot templates"
+msgstr ""
+
 #: src/pages/MessagingSettingsOverlay.tsx
 msgid "Bot to link"
 msgstr ""
@@ -884,12 +948,24 @@ msgstr ""
 msgid "Bots are working"
 msgstr "Bots arbeiten"
 
+#: src/pages/VaultSettingsPanel.tsx
+msgid "Bots that may sign in with this login:"
+msgstr ""
+
 #: src/pages/Paywall.tsx
 msgid "Bots with their own computer and browser"
 msgstr ""
 
 #: src/pages/memory-providers/SerenitySettingsForm.tsx
 msgid "Brain label"
+msgstr ""
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Browse an app's tools"
+msgstr ""
+
+#: src/pages/shell/bot-picker.tsx
+msgid "Browse bot templates"
 msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
@@ -921,6 +997,10 @@ msgstr "Ruft dich an…"
 msgid "Calling…"
 msgstr "Anruf läuft…"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "can change data"
+msgstr ""
+
 #: src/App.tsx
 msgid "Can't reach the server."
 msgstr "Server nicht erreichbar."
@@ -941,6 +1021,7 @@ msgstr "Kann keine Bilder lesen"
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/VaultSettingsPanel.tsx
 msgid "Cancel"
 msgstr "Abbrechen"
 
@@ -976,6 +1057,11 @@ msgstr ""
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Change password"
 msgstr "Passwort ändern"
+
+#: src/pages/PluginsOverlay.tsx
+#: src/pages/shell/bot-panel.tsx
+msgid "Changes data"
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Changing…"
@@ -1063,6 +1149,10 @@ msgstr "Wähle eine Bot-Form und Farbe oder lade ein Bild hoch"
 msgid "Choose a bot…"
 msgstr ""
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Choose a connected app"
+msgstr ""
+
 #: src/pages/Auth.tsx
 msgid "Choose a new password"
 msgstr "Wähle ein neues Passwort"
@@ -1070,6 +1160,10 @@ msgstr "Wähle ein neues Passwort"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Choose file"
 msgstr "Datei wählen"
+
+#: src/pages/PluginsOverlay.tsx
+msgid "Choose which ones each bot may use in the bot's settings."
+msgstr ""
 
 #: src/pages/shell/dialogs.tsx
 msgid "Clear"
@@ -1114,6 +1208,10 @@ msgstr ""
 #: src/pages/WindowChrome.tsx
 msgid "Close"
 msgstr "Schließen"
+
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "Close bot templates"
+msgstr ""
 
 #: src/pages/shell/message-cards.tsx
 msgid "Close chart"
@@ -1196,6 +1294,10 @@ msgstr "Farbe"
 #: src/pages/shell/avatar-studio-popover.tsx
 msgid "Color {color}"
 msgstr "Farbe {color}"
+
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "Comes with a routine that is switched off until you turn it on."
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Comfortable"
@@ -1364,6 +1466,14 @@ msgstr "Verbindungstest fehlgeschlagen."
 msgid "Connection to {0} is still pending. You can close this and check again."
 msgstr "Die Verbindung zu {0} steht noch aus. Du kannst dieses Fenster schließen und später erneut nachsehen."
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Connector tools that change data"
+msgstr ""
+
+#: src/pages/Shell.tsx
+msgid "Connectors"
+msgstr ""
+
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
 msgid "Context limit"
@@ -1418,6 +1528,10 @@ msgstr "Server konnte nicht genehmigt werden"
 #: src/pages/shell/message-cards.tsx
 msgid "Could not authorize this app"
 msgstr "App konnte nicht autorisiert werden"
+
+#: src/pages/VaultSettingsPanel.tsx
+msgid "Could not change access"
+msgstr ""
 
 #: src/pages/AccountSettingsOverlay.tsx
 msgid "Could not change password"
@@ -1630,6 +1744,10 @@ msgstr "Anmeldeoptionen konnten nicht geladen werden"
 msgid "Could not load skill"
 msgstr "Skill konnte nicht geladen werden"
 
+#: src/pages/VaultSettingsPanel.tsx
+msgid "Could not load the vault."
+msgstr ""
+
 #: src/pages/Artifacts.tsx
 msgid "Could not load this artifact."
 msgstr ""
@@ -1693,6 +1811,10 @@ msgstr "Regel konnte nicht entfernt werden"
 
 #: src/pages/shell/bot-credentials.tsx
 msgid "Could not remove the credential"
+msgstr ""
+
+#: src/pages/VaultSettingsPanel.tsx
+msgid "Could not remove the login"
 msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
@@ -1772,6 +1894,10 @@ msgstr "Stimme konnte nicht gespeichert werden"
 
 #: src/pages/shell/bot-credentials.tsx
 msgid "Could not save the credential"
+msgstr ""
+
+#: src/pages/VaultSettingsPanel.tsx
+msgid "Could not save the login"
 msgstr ""
 
 #: src/pages/shell/message-cards.tsx
@@ -2253,6 +2379,7 @@ msgid "Enter a password"
 msgstr "Gib ein Passwort ein"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultSettingsPanel.tsx
 msgid "Enter a username and password"
 msgstr ""
 
@@ -2383,6 +2510,10 @@ msgstr "Fehlgeschlagen."
 msgid "Failure handling"
 msgstr "Fehlerbehandlung"
 
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "Featured"
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "Fields that mark a change"
 msgstr "Felder, die eine Änderung kennzeichnen"
@@ -2405,6 +2536,10 @@ msgstr ""
 
 #: src/pages/Artifacts.tsx
 msgid "Filter by date"
+msgstr ""
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Filter tools"
 msgstr ""
 
 #: src/pages/Artifacts.tsx
@@ -2676,6 +2811,10 @@ msgstr "Anweisungsverlauf"
 msgid "Instructions"
 msgstr "Anweisungen"
 
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "Instructions it starts with"
+msgstr ""
+
 #: src/components/AskCard.tsx
 msgid "Instructions updated"
 msgstr "Anweisungen aktualisiert"
@@ -2768,6 +2907,10 @@ msgstr ""
 msgid "Leave"
 msgstr ""
 
+#: src/pages/Shell.tsx
+msgid "Left out of the folder: {left}"
+msgstr ""
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Lets this bot organize, retune and schedule the bots it creates. You approve each change."
 msgstr "Erlaubt diesem Bot, die von ihm erstellten Bots zu organisieren, anzupassen und zu planen. Du genehmigst jede Änderung."
@@ -2846,6 +2989,7 @@ msgid "Loading rules…"
 msgstr "Regeln werden geladen…"
 
 #: src/pages/PluginsOverlay.tsx
+#: src/pages/shell/bot-panel.tsx
 msgid "Loading tools…"
 msgstr ""
 
@@ -2862,6 +3006,7 @@ msgstr "Stimmanbieter werden geladen…"
 #: src/pages/PeerMessagesOverlay.tsx
 #: src/pages/RoutineRunHistory.tsx
 #: src/pages/Shell.tsx
+#: src/pages/VaultSettingsPanel.tsx
 msgid "Loading…"
 msgstr "Wird geladen…"
 
@@ -2898,6 +3043,7 @@ msgid "Low"
 msgstr ""
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultSettingsPanel.tsx
 msgid "Lowercase letters, numbers, hyphens and underscores, starting with a letter."
 msgstr ""
 
@@ -3091,6 +3237,7 @@ msgstr "Minuten"
 msgid "Missed call"
 msgstr "Verpasster Anruf"
 
+#: src/pages/BotTemplatesOverlay.tsx
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
 #: src/pages/RoutineEditor.tsx
@@ -3185,6 +3332,7 @@ msgstr "Stummgeschaltet"
 #: src/pages/shell/bot-credentials.tsx
 #: src/pages/shell/bot-panel.tsx
 #: src/pages/shell/dialogs.tsx
+#: src/pages/VaultSettingsPanel.tsx
 msgid "Name"
 msgstr "Name"
 
@@ -3198,6 +3346,10 @@ msgstr "Gruppe benennen"
 
 #: src/pages/RoutineEditor.tsx
 msgid "Name this routine"
+msgstr ""
+
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "Needs"
 msgstr ""
 
 #: src/lib/roster-status.ts
@@ -3215,6 +3367,14 @@ msgstr "Übernahme erforderlich"
 #: src/lib/roster-status.ts
 #: src/pages/Shell.tsx
 msgid "Needs you"
+msgstr ""
+
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "Needs:"
+msgstr ""
+
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "Never without your yes"
 msgstr ""
 
 #: src/pages/shell/bot-panel.tsx
@@ -3255,6 +3415,10 @@ msgstr ""
 msgid "No agent connections yet."
 msgstr ""
 
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "No apps"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "No apps match your search."
 msgstr "Keine Apps entsprechen deiner Suche."
@@ -3280,6 +3444,10 @@ msgstr ""
 msgid "No bots match"
 msgstr ""
 
+#: src/pages/VaultSettingsPanel.tsx
+msgid "No bots yet."
+msgstr ""
+
 #: src/pages/MessagingSettingsOverlay.tsx
 msgid "No chat apps linked yet."
 msgstr ""
@@ -3290,6 +3458,10 @@ msgstr ""
 
 #: src/pages/MessagingSettingsOverlay.tsx
 msgid "No group chats yet."
+msgstr ""
+
+#: src/pages/VaultSettingsPanel.tsx
+msgid "No logins saved yet."
 msgstr ""
 
 #: src/components/AskCard.tsx
@@ -3332,6 +3504,10 @@ msgstr "Kein Modellkatalog verfügbar."
 msgid "No models listed."
 msgstr "Keine Modelle aufgelistet."
 
+#: src/pages/shell/bot-panel.tsx
+msgid "No policy, approvals only"
+msgstr ""
+
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "No providers found."
 msgstr "Keine Anbieter gefunden."
@@ -3361,12 +3537,20 @@ msgstr "Noch keine Skills"
 msgid "No team conversations yet."
 msgstr ""
 
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "No templates match."
+msgstr ""
+
 #: src/pages/Board.tsx
 msgid "No tickets yet"
 msgstr ""
 
 #: src/pages/PluginsOverlay.tsx
 msgid "No tools available."
+msgstr ""
+
+#: src/pages/shell/bot-panel.tsx
+msgid "No tools found for this app."
 msgstr ""
 
 #: src/pages/RoutineEditor.tsx
@@ -3564,6 +3748,7 @@ msgstr "Zurückstellen"
 #: src/pages/AccountSettingsOverlay.tsx
 #: src/pages/Auth.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultSettingsPanel.tsx
 msgid "Password"
 msgstr "Passwort"
 
@@ -3718,9 +3903,22 @@ msgstr "Reagieren"
 msgid "Reactions"
 msgstr "Reaktionen"
 
+#: src/pages/PluginsOverlay.tsx
+#: src/pages/shell/bot-panel.tsx
+msgid "Read only"
+msgstr ""
+
 #: src/pages/shell/bot-panel.tsx
 msgid "Read replies aloud"
 msgstr "Antworten vorlesen"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Reading (list, get, search) always works. Sending, posting, creating and deleting follow this setting, except for the tools you allow below."
+msgstr ""
+
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "Ready-made bots with their instructions written. They start read-only: changes to connected apps are blocked until you allow them in the bot's settings."
+msgstr ""
 
 #: src/pages/ModelSettingsOverlay.tsx
 #: src/pages/Onboarding.tsx
@@ -3847,6 +4045,7 @@ msgstr "Neu laden"
 #: src/pages/PluginsOverlay.tsx
 #: src/pages/ScratchpadSection.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultSettingsPanel.tsx
 msgid "Remove"
 msgstr "Entfernen"
 
@@ -3858,6 +4057,11 @@ msgstr "{0} entfernen"
 #. placeholder {0}: bot.name
 #: src/pages/GroupPanel.tsx
 msgid "Remove {0} from the group"
+msgstr ""
+
+#. placeholder {0}: login.name
+#: src/pages/VaultSettingsPanel.tsx
+msgid "Remove {0}? No bot will be able to use it."
 msgstr ""
 
 #: src/pages/ModelBackupsSettings.tsx
@@ -3928,6 +4132,10 @@ msgstr ""
 #: src/pages/ScratchpadSection.tsx
 msgid "Reopen"
 msgstr "Erneut öffnen"
+
+#: src/pages/VaultSettingsPanel.tsx
+msgid "Replace"
+msgstr ""
 
 #: src/pages/ModelSettingsOverlay.tsx
 msgid "Replace API key"
@@ -4072,6 +4280,10 @@ msgstr ""
 msgid "Routine"
 msgstr "Routine"
 
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "Routine (created switched off)"
+msgstr ""
+
 #: src/pages/RoutineEditor.tsx
 msgid "Routines"
 msgstr "Routinen"
@@ -4135,6 +4347,14 @@ msgstr "Backups speichern"
 
 #: src/pages/shell/bot-credentials.tsx
 msgid "Save credential"
+msgstr ""
+
+#: src/pages/VaultSettingsPanel.tsx
+msgid "Save login"
+msgstr ""
+
+#: src/pages/VaultSettingsPanel.tsx
+msgid "Save new login"
 msgstr ""
 
 #: src/pages/shell/bot-credentials.tsx
@@ -4226,6 +4446,10 @@ msgstr "Anbieter suchen"
 #: src/pages/Shell.tsx
 msgid "Search runs"
 msgstr "Durchläufe suchen"
+
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "Search templates"
+msgstr ""
 
 #. placeholder {0}: filters.query.trim()
 #: src/pages/ActivityList.tsx
@@ -4430,6 +4654,7 @@ msgid "Sign up"
 msgstr "Registrieren"
 
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultSettingsPanel.tsx
 msgid "Site"
 msgstr ""
 
@@ -4458,6 +4683,10 @@ msgstr ""
 
 #: src/pages/RoutineEditor.tsx
 msgid "Slack not enabled"
+msgstr ""
+
+#: src/pages/Shell.tsx
+msgid "Slash commands"
 msgstr ""
 
 #: src/components/composer/HoldToTalk.tsx
@@ -4675,6 +4904,10 @@ msgstr ""
 msgid "The connection timed out."
 msgstr "Zeitüberschreitung der Verbindung."
 
+#: src/pages/Shell.tsx
+msgid "The folder has no files that can be attached."
+msgstr ""
+
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
 msgid "The model provider returned an error."
@@ -4846,6 +5079,10 @@ msgstr "Toolquellen"
 
 #: src/pages/PluginsOverlay.tsx
 msgid "Tools"
+msgstr ""
+
+#: src/pages/shell/bot-panel.tsx
+msgid "tools on"
 msgstr ""
 
 #: src/components/composer/HoldToTalk.tsx
@@ -5057,6 +5294,7 @@ msgstr "Eigenen Schlüssel verwenden"
 
 #: src/components/AskCard.tsx
 #: src/pages/shell/bot-credentials.tsx
+#: src/pages/VaultSettingsPanel.tsx
 msgid "Username"
 msgstr ""
 
@@ -5072,6 +5310,11 @@ msgstr ""
 msgid "Values are encrypted and never shown again."
 msgstr "Werte werden verschlüsselt und nicht erneut angezeigt."
 
+#: src/pages/SettingsOverlay.tsx
+#: src/pages/VaultSettingsPanel.tsx
+msgid "Vault"
+msgstr ""
+
 #: src/pages/PluginsOverlay.tsx
 msgid "Verify and add"
 msgstr "Prüfen und hinzufügen"
@@ -5082,6 +5325,10 @@ msgstr "Wird geprüft…"
 
 #: src/pages/Artifacts.tsx
 msgid "Version"
+msgstr ""
+
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "View all"
 msgstr ""
 
 #: src/pages/RoutineRunHistory.tsx
@@ -5120,6 +5367,10 @@ msgstr ""
 
 #: src/pages/shell/bot-credentials.tsx
 msgid "Website login"
+msgstr ""
+
+#: src/pages/VaultSettingsPanel.tsx
+msgid "Website logins you save once and share with the bots you choose. Passwords are encrypted and never shown again, and a bot can only type one into its saved site, over HTTPS. The bot never sees the password."
 msgstr ""
 
 #: src/lib/billing.ts
@@ -5206,6 +5457,10 @@ msgstr "Gestern"
 msgid "You"
 msgstr "Du"
 
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "You can change anything here after adding it, in the bot's settings."
+msgstr ""
+
 #: src/pages/McpOAuthCallback.tsx
 msgid "You can close this tab if it does not redirect automatically."
 msgstr "Du kannst diesen Tab schließen, wenn du nicht automatisch weitergeleitet wirst."
@@ -5226,6 +5481,10 @@ msgstr "Du hast die Kontrolle"
 #: src/lib/run-error.ts
 msgid "Your Anthropic"
 msgstr "Dein Anthropic"
+
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "Your default model"
+msgstr ""
 
 #: src/pages/Auth.tsx
 msgid "Your email address"
@@ -5253,31 +5512,3 @@ msgstr "Dein OpenRouter"
 #: src/pages/Welcome.tsx
 msgid "Your team of always-on agents<0/>that you can give real work to."
 msgstr "Dein Team aus jederzeit verfügbaren Agents<0/>für echte Aufgaben."
-
-#: src/pages/Shell.tsx
-msgid "Add files or photos"
-msgstr ""
-
-#: src/pages/Shell.tsx
-msgid "Add folder"
-msgstr ""
-
-#: src/pages/Shell.tsx
-msgid "Slash commands"
-msgstr ""
-
-#: src/pages/Shell.tsx
-msgid "Connectors"
-msgstr ""
-
-#: src/pages/Shell.tsx
-msgid "Add to message"
-msgstr ""
-
-#: src/pages/Shell.tsx
-msgid "The folder has no files that can be attached."
-msgstr ""
-
-#: src/pages/Shell.tsx
-msgid "Left out of the folder: {left}"
-msgstr ""

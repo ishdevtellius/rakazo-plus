@@ -195,3 +195,27 @@ describe("integration credentials with Infisical", () => {
     }
   });
 });
+
+describe("integration provider settings tool listing", () => {
+  it("lists nothing for a provider that is not configured", async () => {
+    const f = fixture();
+    for (const provider of f.settings.providers()) {
+      expect(await provider.listToolkitTools?.(context, "slack")).toEqual([]);
+    }
+    expect(f.factory).not.toHaveBeenCalled();
+  });
+
+  it("forwards the tool listing to the configured provider", async () => {
+    const f = fixture();
+    const tools = [{ slug: "SLACK_LIST_CONVERSATIONS", name: "List", description: "" }];
+    const listToolkitTools = vi.fn(async () => tools);
+    Object.assign(f.adapter, { listToolkitTools });
+    await f.settings.save({ provider: "composio", apiKey: "fake-key" }, context);
+
+    const composio = f.settings
+      .providers()
+      .find((provider) => provider.describe().id === "composio");
+    expect(await composio?.listToolkitTools?.(context, "slack")).toEqual(tools);
+    expect(listToolkitTools).toHaveBeenCalledWith(context, "slack");
+  });
+});

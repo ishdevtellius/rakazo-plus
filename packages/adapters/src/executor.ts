@@ -52,6 +52,7 @@ import {
   HistorySearchInputSchema,
   isAttachmentImageMimeType,
   OPENAI_COMPATIBLE_PROVIDER_ID,
+  parseConnectorToolPolicy,
 } from "@rakazo/contracts";
 import type { ActionApprovalRule, ToolCallStreak } from "@rakazo/core";
 import {
@@ -64,10 +65,12 @@ import {
   CALL_CLIENT_NONCE_PREFIX,
   callIdFromClientNonce,
   connectorKindFromToolName,
+  connectorToolSlugs,
   containsSecret,
   createStreamingRedactor,
   displayName,
   endsSentence,
+  evaluateConnectorToolPolicy,
   expandSkillReferencesInPrompt,
   formatSkillRunPrompt,
   formatSkillsCatalogInstruction,
@@ -4140,6 +4143,7 @@ export function createRunExecutor(deps: ExecutorDeps) {
         const pageBrowserAllowed =
           graphical && browser.describe().capabilities.page && !heldForTakeover;
         const disabledBuiltinTools = disabledBuiltinToolSet(bot.disabledBuiltinTools);
+        const connectorToolPolicy = parseConnectorToolPolicy(bot.connectorToolPolicy);
         const builtins = [
           ...selectBuiltinToolsForRun({
             ticketBoardEnabled: deps.ticketBoardEnabled,
@@ -4458,6 +4462,17 @@ export function createRunExecutor(deps: ExecutorDeps) {
           if (disabledBuiltinTools.has(name)) {
             return { error: "This tool is disabled for this bot." };
           }
+          // Per-bot connector tool policy. Composio nests the real tool inside one wrapper call,
+          // so judge the tools it would run, not the wrapper's name.
+          let connectorPolicyAsks = false;
+          if (!BUILTIN_AGENT_TOOL_NAMES.has(name)) {
+            const connectorVerdict = evaluateConnectorToolPolicy(
+              connectorToolPolicy,
+              connectorToolSlugs(name, args),
+            );
+            if (connectorVerdict.decision === "block") return { error: connectorVerdict.message };
+            connectorPolicyAsks = connectorVerdict.decision === "ask";
+          }
           if (PAGE_BROWSER_TOOL_NAMES.has(name) && !pageBrowserAllowed) {
             return { error: "Page browser is unavailable on this computer." };
           }
@@ -4747,7 +4762,10 @@ export function createRunExecutor(deps: ExecutorDeps) {
             requiresUnattendedApproval ||
             toolRequiresApproval(name, viaConnector, declaredReadOnly);
           const requiresMandatoryApproval =
-            commandWatch || requiresUnattendedApproval || toolRequiresExplicitApproval(name);
+            commandWatch ||
+            requiresUnattendedApproval ||
+            connectorPolicyAsks ||
+            toolRequiresExplicitApproval(name);
           const connectorKind = connectorKindFromToolName(
             name,
             connectedPlugins.map((plugin) => plugin.provider),

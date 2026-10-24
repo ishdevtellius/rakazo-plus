@@ -9,12 +9,13 @@ import {
   CommandList,
   CommandSeparator,
 } from "@rakazo/ui-web";
-import { Info, Lock, Plus, Users } from "lucide-react";
+import { Info, LayoutGrid, Lock, Plus, Users } from "lucide-react";
 import { useMemo, useState } from "react";
 
 export function BotCreatePicker({
   bots,
   onCreateBot,
+  onOpenTemplates,
   onOpenBot,
   onCreateGroup,
   onCreateSpace,
@@ -23,6 +24,7 @@ export function BotCreatePicker({
 }: {
   bots: Bot[];
   onCreateBot: () => void;
+  onOpenTemplates?: () => void;
   onOpenBot: (botId: string) => void;
   onCreateGroup: () => void;
   onCreateSpace: () => void;
@@ -72,6 +74,17 @@ export function BotCreatePicker({
               >
                 <Plus size={16} strokeWidth={1.8} aria-hidden="true" />
                 <Trans>Create new Bot</Trans>
+              </CommandItem>
+            ) : null}
+            {onOpenTemplates && (!needle || "bot templates".includes(needle)) ? (
+              <CommandItem
+                value="bot-templates"
+                data-testid="open-bot-templates"
+                onSelect={() => onOpenTemplates()}
+                className="gap-2"
+              >
+                <LayoutGrid size={16} strokeWidth={1.8} aria-hidden="true" />
+                <Trans>Browse bot templates</Trans>
               </CommandItem>
             ) : null}
             {matched.map((bot) => (

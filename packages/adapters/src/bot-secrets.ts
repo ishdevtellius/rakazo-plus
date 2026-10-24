@@ -447,6 +447,19 @@ export async function storeBotSecret(input: Parameters<typeof prepareBotSecret>[
   });
 }
 
+/** Vault logins this bot has been granted. A credential saved on the bot itself wins on a name clash. */
+async function grantedVaultLogins(prisma: PrismaClient, scope: BotSecretScope) {
+  const rows = await prisma.botVaultLogin.findMany({
+    where: {
+      botId: scope.botId,
+      vaultLogin: { userId: scope.userId, spaceId: scope.spaceId },
+    },
+    select: { vaultLogin: { select: { id: true, name: true, origin: true, ciphertext: true } } },
+    take: 100,
+  });
+  return rows.map((row) => row.vaultLogin);
+}
+
 export async function listBotSecrets(prisma: PrismaClient, scope: BotSecretScope) {
   const rows = await prisma.botSecret.findMany({
     where: scopeFields(scope),
@@ -454,7 +467,11 @@ export async function listBotSecrets(prisma: PrismaClient, scope: BotSecretScope
     orderBy: { name: "asc" },
     take: 100,
   });
-  return rows.map(botSecretToolView);
+  const own = new Set(rows.map((row) => row.name));
+  const shared = (await grantedVaultLogins(prisma, scope))
+    .filter((login) => !own.has(login.name))
+    .map((login) => ({ name: login.name, origin: login.origin, auth: { type: "login" } }));
+  return [...rows.map(botSecretToolView), ...shared].sort((a, b) => a.name.localeCompare(b.name));
 }
 
 // Owner-facing view: destination and timestamps only, never the row id or ciphertext.
@@ -596,9 +613,15 @@ export async function resolveLoginFill(input: {
   name: string;
   field: LoginField;
 }): Promise<{ text: string; origin: string; redactions: string[] } | { error: string }> {
-  const row = await input.prisma.botSecret.findFirst({
+  const own = await input.prisma.botSecret.findFirst({
     where: { ...scopeFields(input.scope), name: input.name },
   });
+  const shared = own
+    ? undefined
+    : (await grantedVaultLogins(input.prisma, input.scope)).find(
+        (login) => login.name === input.name,
+      );
+  const row = own ?? (shared ? { ...shared, auth: { type: "login" } } : undefined);
   if (!row) return { error: "Login is unavailable. Use request_secret to save it first." };
   if (isCommandCredential(row.auth)) {
     return {

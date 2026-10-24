@@ -15,6 +15,23 @@ vi.mock("../../lib/rpc", () => ({
       list: vi.fn(async () => []),
     },
     me: vi.fn(async () => ({})),
+    connections: {
+      list: vi.fn(async () => [
+        {
+          id: "connection-1",
+          connectorId: "composio",
+          provider: "slack",
+          displayName: "Slack",
+          status: "connected",
+          capabilities: [],
+          createdAt: "2026-01-01T00:00:00.000Z",
+        },
+      ]),
+      toolkitTools: vi.fn(async () => [
+        { slug: "SLACK_LIST_CONVERSATIONS", name: "List", description: "", write: false },
+        { slug: "SLACK_SEND_MESSAGE", name: "Send", description: "", write: true },
+      ]),
+    },
   },
 }));
 vi.mock("@lingui/react/macro", () => {
@@ -120,7 +137,12 @@ afterEach(() => {
   container.remove();
 });
 
-type SavePatch = { disabledBuiltinTools?: string[]; name?: string; title?: string };
+type SavePatch = {
+  disabledBuiltinTools?: string[];
+  name?: string;
+  title?: string;
+  connectorToolPolicy?: Bot["connectorToolPolicy"];
+};
 
 function setField(input: HTMLInputElement, value: string) {
   const setter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, "value")?.set;
@@ -452,4 +474,139 @@ it("omits projected identity values on unrelated saves but keeps explicit edits"
   await flush();
   expect(onSave.mock.calls[2]?.[0]).not.toHaveProperty("name");
   expect(onSave.mock.calls[2]?.[0]).not.toHaveProperty("title");
+});
+
+function setSelect(select: HTMLSelectElement, value: string) {
+  const setter = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, "value")?.set;
+  setter?.call(select, value);
+  select.dispatchEvent(new Event("change", { bubbles: true }));
+}
+
+describe("BotSettings connector tool policy", () => {
+  const withPolicy = (connectorToolPolicy: Bot["connectorToolPolicy"]) =>
+    ({ ...bot, connectorToolPolicy }) as Bot;
+  const blocked: NonNullable<Bot["connectorToolPolicy"]> = {
+    writes: "block",
+    allowWriteTools: [],
+    blockTools: [],
+  };
+
+  it("saves the chosen write mode and keeps the lists", async () => {
+    const onSave = vi.fn<(patch: SavePatch) => Promise<void>>(async () => undefined);
+    await renderSettings(
+      onSave,
+      withPolicy({ ...blocked, allowWriteTools: ["SLACK_SEND_MESSAGE"] }),
+    );
+
+    const select = container.querySelector<HTMLSelectElement>('[id$="-connector-writes"]');
+    if (!select) throw new Error("Missing write mode select");
+    expect(select.value).toBe("block");
+    await act(async () => setSelect(select, "ask"));
+    await flush();
+
+    expect(onSave).toHaveBeenCalledWith({
+      connectorToolPolicy: {
+        writes: "ask",
+        allowWriteTools: ["SLACK_SEND_MESSAGE"],
+        blockTools: [],
+      },
+    });
+  });
+
+  it("shows no policy for a bot without one and clears it when chosen", async () => {
+    const onSave = vi.fn<(patch: SavePatch) => Promise<void>>(async () => undefined);
+    await renderSettings(onSave, withPolicy(null));
+
+    const select = container.querySelector<HTMLSelectElement>('[id$="-connector-writes"]');
+    if (!select) throw new Error("Missing write mode select");
+    expect(select.value).toBe("off");
+    expect(container.querySelector('[id$="-allow-write-tool"]')).toBeNull();
+
+    await act(async () => setSelect(select, "block"));
+    await flush();
+    expect(onSave).toHaveBeenLastCalledWith({ connectorToolPolicy: blocked });
+
+    await act(async () => setSelect(select, "off"));
+    await flush();
+    expect(onSave).toHaveBeenLastCalledWith({ connectorToolPolicy: null });
+  });
+
+  it("adds and removes an allowed write tool", async () => {
+    const onSave = vi.fn<(patch: SavePatch) => Promise<void>>(async () => undefined);
+    await renderSettings(onSave, withPolicy(blocked));
+
+    const input = container.querySelector<HTMLInputElement>('[id$="-allow-write-tool"]');
+    if (!input) throw new Error("Missing allowed tool input");
+    await submitToolName(input, "SLACK_SEND_MESSAGE");
+    expect(onSave.mock.calls[0]?.[0].connectorToolPolicy?.allowWriteTools).toEqual([
+      "SLACK_SEND_MESSAGE",
+    ]);
+
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('[id$="-allow-SLACK_SEND_MESSAGE"]')?.click();
+    });
+    await flush();
+    expect(onSave.mock.calls[1]?.[0].connectorToolPolicy?.allowWriteTools).toEqual([]);
+  });
+
+  it("blocks a named tool even when writes are allowed", async () => {
+    const onSave = vi.fn<(patch: SavePatch) => Promise<void>>(async () => undefined);
+    await renderSettings(onSave, withPolicy({ ...blocked, writes: "allow" }));
+
+    const input = container.querySelector<HTMLInputElement>('[id$="-block-tool"]');
+    if (!input) throw new Error("Missing blocked tool input");
+    await submitToolName(input, "SLACK_SEARCH_MESSAGES");
+    expect(onSave.mock.calls[0]?.[0].connectorToolPolicy).toEqual({
+      writes: "allow",
+      allowWriteTools: [],
+      blockTools: ["SLACK_SEARCH_MESSAGES"],
+    });
+  });
+});
+
+describe("BotSettings tool browser", () => {
+  const policyBot = {
+    ...bot,
+    connectorToolPolicy: { writes: "block", allowWriteTools: [], blockTools: [] },
+  } as Bot;
+
+  async function openSlackTools(onSave: (patch: SavePatch) => Promise<void>) {
+    await renderSettings(onSave, policyBot);
+    const select = container.querySelector<HTMLSelectElement>('[id$="-browse-app"]');
+    if (!select) throw new Error("Missing app select");
+    await act(async () => setSelect(select, "slack"));
+    await flush();
+  }
+
+  it("lists an app's tools labelled read or write", async () => {
+    const onSave = vi.fn<(patch: SavePatch) => Promise<void>>(async () => undefined);
+    await openSlackTools(onSave);
+
+    expect(container.textContent).toContain("SLACK_LIST_CONVERSATIONS");
+    expect(container.textContent).toContain("SLACK_SEND_MESSAGE");
+    expect(container.textContent).toContain("Read only");
+    expect(container.textContent).toContain("Changes data");
+    expect(container.textContent).toContain("1 / 2");
+  });
+
+  it("allows a write tool and blocks a read tool from the list", async () => {
+    const onSave = vi.fn<(patch: SavePatch) => Promise<void>>(async () => undefined);
+    await openSlackTools(onSave);
+
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('[id$="-tool-SLACK_SEND_MESSAGE"]')?.click();
+    });
+    await flush();
+    expect(onSave.mock.calls[0]?.[0].connectorToolPolicy?.allowWriteTools).toEqual([
+      "SLACK_SEND_MESSAGE",
+    ]);
+
+    await act(async () => {
+      container.querySelector<HTMLButtonElement>('[id$="-tool-SLACK_LIST_CONVERSATIONS"]')?.click();
+    });
+    await flush();
+    expect(onSave.mock.calls[1]?.[0].connectorToolPolicy?.blockTools).toEqual([
+      "SLACK_LIST_CONVERSATIONS",
+    ]);
+  });
 });
