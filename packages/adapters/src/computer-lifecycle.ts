@@ -321,6 +321,26 @@ export async function provisionComputer(
   let provisioned: ComputerRef | undefined;
   try {
     await onProgress?.("recreating");
+    // Moving a computer to another host (Docker <-> this machine) must not leave the old one
+    // running: it would keep its container, its home mount and any background commands.
+    const wantedKind = await deps.sandbox.provisionKind?.(existing.homeKey);
+    if (existing.providerRef && wantedKind && wantedKind !== existing.kind) {
+      await deps.sandbox
+        .stop(
+          {
+            id: existing.id,
+            botId: existing.homeKey,
+            kind: existing.kind as ComputerRef["kind"],
+            providerRef: existing.providerRef,
+          },
+          context,
+        )
+        .catch((error: unknown) => {
+          getLogger().warn("could not stop the computer a bot moved away from", {
+            error: error instanceof Error ? error.message : String(error),
+          });
+        });
+    }
     const ref = await deps.sandbox.provision(
       {
         botId: existing.homeKey,

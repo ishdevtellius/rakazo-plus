@@ -315,7 +315,7 @@ describe("native host computer transport", () => {
     ).rejects.toThrow();
   });
 
-  it("preserves the saved workspace when a native file grows beyond the transfer limit", async () => {
+  it("never copies a native workspace into the saved store, so a huge file cannot cost anything", async () => {
     const home = new LocalAgentHomeStore(path.join(root, "saved"));
     const filePath = path.join(
       root,
@@ -332,16 +332,35 @@ describe("native host computer transport", () => {
     await writeFile(filePath, Buffer.alloc(8 * 1024 * 1024 + 1));
     await client.writeFile(
       computer,
-      { path: "a-partial.txt", content: new TextEncoder().encode("unsaved change") },
+      { path: "a-partial.txt", content: new TextEncoder().encode("kept on the computer") },
       context,
     );
+    // The computer's own disk is the permanent copy: a checkpoint is a marker, not a copy.
     await expect(
       checkpointComputerWorkspace(home, client, "test-bot", computer, context),
-    ).rejects.toThrow("exceeds 8388608 bytes");
-    expect(await readFile(path.join(home.pathFor("test-bot"), "result.bin"), "utf8")).toBe(
-      "saved result",
+    ).resolves.toMatch(/^rev-/);
+    const saved = await readdir(home.pathFor("test-bot")).catch(() => []);
+    expect(saved).not.toContain("result.bin");
+    expect(saved).not.toContain("a-partial.txt");
+    // A direct export still refuses to return a partial copy: it never silently loses a file.
+    await expect(collect(client.exportWorkspace(computer, context))).rejects.toThrow("exceeds");
+  });
+
+  it("restores without overwriting files the computer already has", async () => {
+    await client.writeFile(
+      computer,
+      { path: "notes.md", content: new TextEncoder().encode("edited on the Mac") },
+      context,
     );
-    expect(await readdir(home.pathFor("test-bot"))).toEqual(["result.bin"]);
+    async function* saved() {
+      yield { path: "notes.md", content: new TextEncoder().encode("older saved copy") };
+      yield { path: "new.md", content: new TextEncoder().encode("only in the saved copy") };
+    }
+    await client.importWorkspace(computer, saved(), context);
+    const read = async (name: string) =>
+      new TextDecoder().decode(await client.readFile(computer, name, context));
+    expect(await read("notes.md")).toBe("edited on the Mac");
+    expect(await read("new.md")).toBe("only in the saved copy");
   });
 
   it.each(["revoke", "cancel"])(

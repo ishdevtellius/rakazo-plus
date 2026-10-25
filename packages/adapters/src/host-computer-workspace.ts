@@ -14,6 +14,7 @@ const SKIPPED_DIRECTORIES = new Set([
 /** A restore into a local computer is bounded, so booting never copies a multi-gigabyte home. */
 export const HOST_IMPORT_MAX_BYTES = 512 * 1024 * 1024;
 export const HOST_IMPORT_MAX_FILES = 30_000;
+const HOST_IMPORT_CONCURRENCY = 8;
 
 export function skipsHostWorkspacePath(relative: string): boolean {
   return relative.split("/").some((segment) => SKIPPED_DIRECTORIES.has(segment));
@@ -41,7 +42,11 @@ export async function importHostWorkspace(
   let imported = 0;
   let skipped = 0;
   let bytes = 0;
+  // Each file is its own request, so a few run at once; distinct files never depend on each other.
+  const inFlight = new Set<Promise<void>>();
+  let failure: unknown;
   for await (const file of files) {
+    if (failure) break;
     if (
       skipsHostWorkspaceFile(file) ||
       imported >= maxFiles ||
@@ -50,10 +55,18 @@ export async function importHostWorkspace(
       skipped += 1;
       continue;
     }
-    await write(file);
     imported += 1;
     bytes += file.content.byteLength;
+    const task: Promise<void> = write(file)
+      .catch((error: unknown) => {
+        failure ??= error;
+      })
+      .finally(() => inFlight.delete(task));
+    inFlight.add(task);
+    if (inFlight.size >= HOST_IMPORT_CONCURRENCY) await Promise.race(inFlight);
   }
+  await Promise.all(inFlight);
+  if (failure) throw failure;
   if (skipped > 0) {
     getLogger().warn("local computer restore left files behind", { imported, skipped, bytes });
   }

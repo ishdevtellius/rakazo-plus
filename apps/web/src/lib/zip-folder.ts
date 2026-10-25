@@ -14,18 +14,32 @@ const SKIP_DIRS = new Set([
   ".idea",
   ".vscode",
 ]);
+// Folders that hold credentials: never packed, and reported so the owner knows they were left out.
+const SECRET_DIRS = new Set([".ssh", ".aws", ".gnupg", ".kube", ".docker", ".azure", ".terraform"]);
 // Secret-looking names are never packed; the picker reports what was left out.
 const SKIP_FILE = [
   /^\.DS_Store$/i,
   /^\.env(\..*)?$/i,
   /\.(pem|p12|pfx|keystore)$/i,
-  /^id_(rsa|ed25519)/i,
-  /^\.(npmrc|pypirc|netrc)$/i,
+  /^id_(rsa|dsa|ecdsa|ed25519)/i,
+  /\.(key|jks|ppk|gpg)$/i,
+  /^\.(npmrc|pypirc|netrc|htpasswd|pgpass|dockercfg)$/i,
+  /\.(tfstate|tfvars)(\.backup)?$/i,
+  /^(service[-_]?account|client[-_]?secrets?).*\.json$/i,
+  /^kubeconfig$/i,
   /(^|[._-])(secret|secrets|credentials)([._-]|$)/i,
 ];
 const MAX_FILES = 5000;
+/** Everything is read into memory to be packed, so a folder this large is refused up front. */
+const MAX_RAW_BYTES = 200 * 1024 * 1024;
 
-export type FolderZip = { file: File; included: number; skipped: string[] };
+export type FolderZip = {
+  file: File;
+  included: number;
+  skipped: string[];
+  /** The folder is too large to pack; nothing was read. */
+  tooLarge?: boolean;
+};
 
 let crcTable: Uint32Array | null = null;
 function crc32(bytes: Uint8Array): number {
@@ -45,7 +59,9 @@ function crc32(bytes: Uint8Array): number {
 async function deflateRaw(data: Uint8Array): Promise<Uint8Array | null> {
   if (typeof CompressionStream === "undefined") return null;
   try {
-    const stream = new Blob([data as BlobPart]).stream().pipeThrough(new CompressionStream("deflate-raw"));
+    const stream = new Blob([data as BlobPart])
+      .stream()
+      .pipeThrough(new CompressionStream("deflate-raw"));
     return new Uint8Array(await new Response(stream).arrayBuffer());
   } catch {
     return null;
@@ -74,6 +90,12 @@ export async function zipFolder(files: readonly File[]): Promise<FolderZip> {
     const parts = rel.split("/");
     const name = parts[parts.length - 1] ?? file.name;
     const dirs = parts.slice(1, -1);
+    // A path that climbs out of the folder is never packed.
+    if (parts.some((part) => part === "..")) continue;
+    if (dirs.some((dir) => SECRET_DIRS.has(dir))) {
+      skipped.push(rel);
+      continue;
+    }
     if (dirs.some((dir) => SKIP_DIRS.has(dir))) continue;
     if (SKIP_FILE.some((pattern) => pattern.test(name))) {
       skipped.push(rel);
@@ -84,6 +106,15 @@ export async function zipFolder(files: readonly File[]): Promise<FolderZip> {
       continue;
     }
     chosen.push({ path: rel, file });
+  }
+  const rawBytes = chosen.reduce((total, item) => total + item.file.size, 0);
+  if (rawBytes > MAX_RAW_BYTES) {
+    return {
+      file: new File([], `${root}.zip`, { type: "application/zip" }),
+      included: 0,
+      skipped,
+      tooLarge: true,
+    };
   }
   const encoder = new TextEncoder();
   const chunks: Uint8Array[] = [];

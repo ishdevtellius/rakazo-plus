@@ -41,6 +41,7 @@ function database() {
   const tables = new Map<string, Row[]>([
     ["secret", []],
     ["botSecret", []],
+    ["vaultLogin", []],
     ["integrationProviderConfig", []],
     ["user", [{ id: "user" }]],
     ["space", [{ id: "space", organizationId: "organization" }]],
@@ -88,7 +89,7 @@ function database() {
         const removed = rows.filter((row) => matches(row, args.where));
         for (const row of removed) rows.splice(rows.indexOf(row), 1);
         if (table === "user")
-          for (const target of ["secret", "botSecret"]) {
+          for (const target of ["secret", "botSecret", "vaultLogin"]) {
             const children = tables.get(target)!;
             for (let i = children.length - 1; i >= 0; i--)
               if (removed.some((parent) => children[i]?.userId === parent.id))
@@ -104,7 +105,9 @@ function database() {
               : removed;
           if (table === "organization")
             for (const space of removedSpaces) spaces.splice(spaces.indexOf(space), 1);
-          for (const target of table === "bot" ? ["botSecret"] : ["secret", "botSecret"]) {
+          for (const target of table === "bot"
+            ? ["botSecret"]
+            : ["secret", "botSecret", "vaultLogin"]) {
             const children = tables.get(target)!;
             for (let i = children.length - 1; i >= 0; i--)
               if (
@@ -126,6 +129,7 @@ function database() {
     const names: Record<string, string> = {
       secrets: "secret",
       bot_secrets: "botSecret",
+      vault_logins: "vaultLogin",
       integration_provider_configs: "integrationProviderConfig",
       user: "user",
       spaces: "space",
@@ -282,6 +286,29 @@ describe("secret persistence cleanup", () => {
         update: { ciphertext: config.ref },
       });
       await prisma.integrationProviderConfig.deleteMany({ where: { id: "composio" } });
+      expect(fake.values.size).toBe(0);
+    } finally {
+      await store.close();
+    }
+  });
+  it("cleans the stored secret of a shared vault login when its user or space is deleted", async () => {
+    const fake = infisicalFake();
+    const store = new InfisicalSecretStore(fake.options);
+    await store.start();
+    const db = database();
+    const prisma = withSecretPersistence(db.prisma, store);
+    const first = await store.put("vault-one", context, { recordId: "vault-1" });
+    const second = await store.put("vault-two", context, { recordId: "vault-2" });
+    db.tables
+      .get("vaultLogin")!
+      .push(
+        { id: "vault-1", ciphertext: first.ref, userId: "user", spaceId: "space" },
+        { id: "vault-2", ciphertext: second.ref, userId: "other", spaceId: "space" },
+      );
+    try {
+      await prisma.user.deleteMany({ where: { id: "user" } });
+      expect(fake.values.size).toBe(1);
+      await prisma.space.deleteMany({ where: { id: "space" } });
       expect(fake.values.size).toBe(0);
     } finally {
       await store.close();

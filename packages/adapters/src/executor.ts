@@ -4050,7 +4050,8 @@ export function createRunExecutor(deps: ExecutorDeps) {
           },
           () => runAbortController?.abort(),
         );
-        const computerKind = (await deps.sandbox.provisionKind?.()) ?? storedComputer.kind;
+        const computerKind =
+          (await deps.sandbox.provisionKind?.(storedComputer.homeKey)) ?? storedComputer.kind;
         const workspaceCheckpoint = createRunWorkspaceCheckpoint(async () => {
           if (!runComputer.ready) return;
           await checkpointRunComputerWorkspace(deps, storedComputer, runComputer.ready, context);
@@ -4467,16 +4468,36 @@ export function createRunExecutor(deps: ExecutorDeps) {
             return { error: "This tool is disabled for this bot." };
           }
           // Per-bot connector tool policy. Composio nests the real tool inside one wrapper call,
-          // so judge the tools it would run, not the wrapper's name.
+          // so judge the tools it would run, not the wrapper's name. It is applied again below to
+          // what actually runs: the stored arguments of an approved replay, and the concrete tool
+          // a catalog call resolves to.
           let connectorPolicyAsks = false;
-          if (!BUILTIN_AGENT_TOOL_NAMES.has(name)) {
-            const connectorVerdict = evaluateConnectorToolPolicy(
-              connectorToolPolicy,
-              connectorToolSlugs(name, args),
+          const judgeConnectorCall = async (
+            toolName: string,
+            toolArgs: Record<string, unknown>,
+          ): Promise<{ error: string } | undefined> => {
+            if (BUILTIN_AGENT_TOOL_NAMES.has(toolName)) return undefined;
+            // The owner may change the policy while a run is going; use the current one.
+            let current = connectorToolPolicy;
+            try {
+              const row = await deps.prisma.bot.findUnique({
+                where: { id: bot.id },
+                select: { connectorToolPolicy: true },
+              });
+              if (row) current = parseConnectorToolPolicy(row.connectorToolPolicy);
+            } catch {
+              // Keep the policy the run started with.
+            }
+            const verdict = evaluateConnectorToolPolicy(
+              current,
+              connectorToolSlugs(toolName, toolArgs),
             );
-            if (connectorVerdict.decision === "block") return { error: connectorVerdict.message };
-            connectorPolicyAsks = connectorVerdict.decision === "ask";
-          }
+            if (verdict.decision === "block") return { error: verdict.message };
+            if (verdict.decision === "ask") connectorPolicyAsks = true;
+            return undefined;
+          };
+          const firstJudgement = await judgeConnectorCall(name, args);
+          if (firstJudgement) return firstJudgement;
           if (PAGE_BROWSER_TOOL_NAMES.has(name) && !pageBrowserAllowed) {
             return { error: "Page browser is unavailable on this computer." };
           }
@@ -4501,7 +4522,11 @@ export function createRunExecutor(deps: ExecutorDeps) {
             onCatalogExecuteRoute,
           );
           if (approvedReplay.error) return { error: approvedReplay.error };
-          if (approvedReplay.args) connectorCall.args = approvedReplay.args;
+          if (approvedReplay.args) {
+            connectorCall.args = approvedReplay.args;
+            const replayJudgement = await judgeConnectorCall(name, approvedReplay.args);
+            if (replayJudgement) return replayJudgement;
+          }
           let catalogRemapped = false;
           let resolvedTool: ConnectorTool | undefined;
           if (name.startsWith("cloud_agent_") && !validCloudAgentArgs(name, args)) {
@@ -4519,6 +4544,11 @@ export function createRunExecutor(deps: ExecutorDeps) {
                     error: "Connector tool name conflicts with a built-in tool",
                   };
                 }
+                const resolvedJudgement = await judgeConnectorCall(
+                  resolved.tool.name,
+                  resolved.call.args,
+                );
+                if (resolvedJudgement) return resolvedJudgement;
                 name = resolved.tool.name;
                 args = resolved.call.args;
                 catalogRemapped = true;

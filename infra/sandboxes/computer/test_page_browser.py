@@ -101,6 +101,37 @@ class PageBrowserTest(unittest.TestCase):
             with self.assertRaisesRegex(RuntimeError, "Unexpected CDP"):
                 helper.discover_ws_url(9222)
 
+    def _client_with_pages(self, hidden_pages):
+        client = helper.CdpClient("ws://127.0.0.1:9222/test")
+        targets = [{"type": "page", "targetId": f"t{i}"} for i in range(hidden_pages)]
+
+        def fake_call(method, params=None, *, session_id=None, timeout_s=30.0):
+            if method == "Target.getTargets":
+                return {"targetInfos": targets}
+            if method == "Target.attachToTarget":
+                return {"sessionId": "s-" + params["targetId"]}
+            return {}
+
+        client.call = fake_call
+        return client
+
+    def test_a_hidden_only_tab_is_refused_unless_the_owner_machine_opts_in(self):
+        client = self._client_with_pages(1)
+        with patch.object(helper, "ensure_world"), patch.object(helper, "eval_json", return_value=False):
+            with patch.dict(os.environ, {}, clear=False):
+                os.environ.pop("RAKAZO_ATTACH_SINGLE_HIDDEN_PAGE", None)
+                with self.assertRaisesRegex(RuntimeError, "No unambiguous"):
+                    helper.attach_page(client)
+            with patch.dict(os.environ, {"RAKAZO_ATTACH_SINGLE_HIDDEN_PAGE": "1"}):
+                self.assertEqual(helper.attach_page(client), "s-t0")
+
+    def test_several_hidden_tabs_stay_ambiguous_even_when_opted_in(self):
+        client = self._client_with_pages(2)
+        with patch.object(helper, "ensure_world"), patch.object(helper, "eval_json", return_value=False):
+            with patch.dict(os.environ, {"RAKAZO_ATTACH_SINGLE_HIDDEN_PAGE": "1"}):
+                with self.assertRaisesRegex(RuntimeError, "No unambiguous"):
+                    helper.attach_page(client)
+
     def test_ensure_world_reuses_named_isolated_context(self):
         client = helper.CdpClient("ws://127.0.0.1:9222/test")
         calls = []

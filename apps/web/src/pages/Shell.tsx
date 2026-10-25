@@ -230,7 +230,6 @@ import {
   revokePendingAttachmentPreviews,
   usePendingAttachmentPreviewCleanup,
 } from "../lib/pending-attachments";
-import { zipFolder } from "../lib/zip-folder";
 import { markAfterPaint, markOnce } from "../lib/performance";
 import { usePreloadRecoveryState } from "../lib/preload-recovery";
 import { quoteDraftForSelection } from "../lib/quote-selection";
@@ -289,6 +288,7 @@ import {
 } from "../lib/transcript-scroll";
 import { speaker } from "../lib/tts";
 import { errorText } from "../lib/user-error";
+import { zipFolder } from "../lib/zip-folder";
 import { ActivityList } from "./ActivityList";
 import type { ContextMenuPosition } from "./BotContextMenu";
 import { CreateGroupForm, GroupSettings, memberName } from "./GroupPanel";
@@ -6078,15 +6078,27 @@ export const Composer = memo(function Composer({
     const picked = files ? Array.from(files) : [];
     if (folderInputRef.current) folderInputRef.current.value = "";
     if (!picked.length) return;
-    const zipped = await zipFolder(picked);
+    let zipped: Awaited<ReturnType<typeof zipFolder>>;
+    try {
+      zipped = await zipFolder(picked);
+    } catch {
+      onAttachmentNotice?.(t`That folder could not be read.`);
+      return;
+    }
+    if (zipped.tooLarge) {
+      onAttachmentNotice?.(t`The folder is too large to attach.`);
+      return;
+    }
     if (zipped.included === 0) {
       onAttachmentNotice?.(t`The folder has no files that can be attached.`);
       return;
     }
     const transfer = new DataTransfer();
     transfer.items.add(zipped.file);
-    if (onAttachmentPick(transfer.files)) markEdited();
-    if (zipped.skipped.length) {
+    const attached = onAttachmentPick(transfer.files);
+    if (attached) markEdited();
+    // When the pick was refused it has already said why; do not talk over it.
+    if (attached && zipped.skipped.length) {
       const left = zipped.skipped.slice(0, 5).join(", ");
       onAttachmentNotice?.(t`Left out of the folder: ${left}`);
     }

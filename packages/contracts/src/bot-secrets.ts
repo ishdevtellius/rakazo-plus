@@ -339,5 +339,7 @@ export const VaultLoginPutInput = z.object({
   name: BotSecretName,
   origin: z.string().min(1).max(2048),
   value: z.string().min(1).max(BOT_SECRET_VALUE_MAX_LENGTH),
+  /** Set only when changing an existing login, so adding can never overwrite one. */
+  replace: z.boolean().default(false),
 });
 export type VaultLoginPutInput = z.infer<typeof VaultLoginPutInput>;

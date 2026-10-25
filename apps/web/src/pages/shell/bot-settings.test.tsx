@@ -80,6 +80,7 @@ vi.mock("../KnowledgeSection", () => ({ KnowledgeSection: () => null }));
 vi.mock("./avatar-studio-popover", () => ({ AvatarStudioPopover: () => null }));
 vi.mock("./bot-credentials", () => ({ BotCredentialsSection: () => null }));
 
+import { rpc } from "../../lib/rpc";
 import { BotSettings } from "./bot-panel";
 
 const bot = {
@@ -138,6 +139,7 @@ afterEach(() => {
 });
 
 type SavePatch = {
+  computerHost?: Bot["computerHost"];
   disabledBuiltinTools?: string[];
   name?: string;
   title?: string;
@@ -513,6 +515,20 @@ describe("BotSettings connector tool policy", () => {
     });
   });
 
+  it("goes back to the saved policy when saving fails, instead of showing a choice that was not kept", async () => {
+    const onSave = vi.fn<(patch: SavePatch) => Promise<void>>(async () => {
+      throw new Error("nope");
+    });
+    await renderSettings(onSave, withPolicy(blocked));
+    const select = container.querySelector<HTMLSelectElement>('[id$="-connector-writes"]');
+    if (!select) throw new Error("Missing write mode select");
+    await act(async () => setSelect(select, "allow"));
+    await flush();
+    await flush();
+    expect(onSave).toHaveBeenCalled();
+    expect(select.value).toBe("block");
+  });
+
   it("shows no policy for a bot without one and clears it when chosen", async () => {
     const onSave = vi.fn<(patch: SavePatch) => Promise<void>>(async () => undefined);
     await renderSettings(onSave, withPolicy(null));
@@ -608,5 +624,61 @@ describe("BotSettings tool browser", () => {
     expect(onSave.mock.calls[1]?.[0].connectorToolPolicy?.blockTools).toEqual([
       "SLACK_LIST_CONVERSATIONS",
     ]);
+  });
+});
+
+describe("BotSettings where this bot runs", () => {
+  const select = () =>
+    container.querySelector<HTMLSelectElement>('[data-testid="bot-computer-host-select"]');
+  const owner = (computerHost: "docker" | "this-mac" | null) =>
+    vi.mocked(rpc.me).mockResolvedValue({ canChooseHostComputer: true, computerHost } as never);
+
+  afterEach(() => {
+    vi.mocked(rpc.me).mockResolvedValue({} as never);
+  });
+
+  it("offers a dedicated bot a choice and saves it", async () => {
+    owner("docker");
+    const onSave = vi.fn<(patch: SavePatch) => Promise<void>>(async () => undefined);
+    await renderSettings(onSave, { ...bot, computerMode: "dedicated", computerHost: null } as Bot);
+    await flush();
+    const control = select();
+    if (!control) throw new Error("Missing computer host select");
+    expect(control.value).toBe("");
+    expect(control.textContent).toContain("Follow the default (Docker computer)");
+    await act(async () => setSelect(control, "this-mac"));
+    await flush();
+    expect(onSave).toHaveBeenCalledWith({ computerHost: "this-mac" });
+    await act(async () => setSelect(control, ""));
+    await flush();
+    expect(onSave).toHaveBeenCalledWith({ computerHost: null });
+  });
+
+  it("shows the saved choice and names the default when it is this Mac", async () => {
+    owner("this-mac");
+    await renderSettings(async () => undefined, {
+      ...bot,
+      computerMode: "dedicated",
+      computerHost: "docker",
+    } as Bot);
+    await flush();
+    expect(select()?.value).toBe("docker");
+    expect(select()?.textContent).toContain("Follow the default (This Mac)");
+  });
+
+  it("tells a team bot it follows the default instead of offering a choice", async () => {
+    owner("docker");
+    await renderSettings(async () => undefined, { ...bot, computerMode: "team" } as Bot);
+    await flush();
+    expect(select()).toBeNull();
+    expect(container.textContent).toContain("shares the Team Computer");
+  });
+
+  it("hides the choice from anyone who cannot move computers", async () => {
+    vi.mocked(rpc.me).mockResolvedValue({ canChooseHostComputer: false } as never);
+    await renderSettings(async () => undefined, { ...bot, computerMode: "dedicated" } as Bot);
+    await flush();
+    expect(select()).toBeNull();
+    expect(container.querySelector('[data-testid="bot-computer-host"]')).toBeNull();
   });
 });

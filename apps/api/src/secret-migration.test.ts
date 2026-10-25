@@ -10,6 +10,7 @@ function fixture() {
       kind: i === 0 ? "run-secret:run" : "model",
     })),
     botSecret: [{ id: "bot-row", ciphertext: "fake-bot-ref" }],
+    vaultLogin: [{ id: "vault-row", ciphertext: "fake-vault-ref" }],
     integrationProviderConfig: [{ id: "composio", ciphertext: "fake-config-ref" }],
   };
   const client = Object.fromEntries(
@@ -55,7 +56,7 @@ describe("migration persistence", () => {
     const f = fixture();
     const rows = [];
     for await (const row of f.repository.rows()) rows.push(row);
-    expect(rows).toHaveLength(103);
+    expect(rows).toHaveLength(104);
     expect(rows[0]).toMatchObject({ ephemeral: true, id: "row-000", label: "secret" });
     expect(rows.at(-1)).toMatchObject({
       id: "composio",
@@ -63,6 +64,12 @@ describe("migration persistence", () => {
       ref: "fake-config-ref",
     });
     expect(rows.find((row) => row.id === "bot-row")?.recordId).toBe("bot-row");
+    // A shared vault login is re-encrypted with every other credential, never left behind.
+    expect(rows.find((row) => row.id === "vault-row")).toMatchObject({
+      label: "vaultLogin",
+      recordId: "vault-row",
+      ref: "fake-vault-ref",
+    });
   });
   it("compares the original ref so a concurrent update or delete wins", async () => {
     const f = fixture();
@@ -73,6 +80,7 @@ describe("migration persistence", () => {
     expect(await f.repository.replace(row, "fake-deleted")).toBe(false);
     expect(await f.repository.referenced("fake-bot-ref")).toBe(true);
     expect(await f.repository.referenced("fake-config-ref")).toBe(true);
+    expect(await f.repository.referenced("fake-vault-ref")).toBe(true);
     expect(await f.repository.referenced("fake-missing")).toBe(false);
   });
 });

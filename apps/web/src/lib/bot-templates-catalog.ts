@@ -112,7 +112,7 @@ export const CATALOG_TEMPLATES: BotTemplate[] = [
       name: "PR check-in",
       prompt:
         "Check the open pull requests on the saved repository now and post the status board. Say 'nothing changed' if nothing changed since the last check.",
-      crons: ["*/30 * * * *"],
+      crons: ["0 9-18 * * 1-5"],
       timezone: "UTC",
     },
   }),
@@ -438,28 +438,6 @@ export const CATALOG_TEMPLATES: BotTemplate[] = [
       "If no bank connection exists, say you are working from pasted data. This is not budgeting.",
   }),
   bot({
-    id: "home-robots",
-    category: "Personal",
-    name: "Home Robots",
-    title: "Start, pause and dock your home robots from chat",
-    summary:
-      "Control home robots from chat: vacuums, mowers and Matter devices. Say start, pause, dock, or how's it doing.",
-    never: "Never runs a device without you asking.",
-    role: "You operate the user's home robots when they ask: start, pause, dock and status.",
-    rules: [
-      "Only act on a device the user names, only when they ask in this chat, and report the device's reply exactly.",
-    ],
-    steps: [
-      "List the robots the user has connected. If one is missing, say how to connect it.",
-      "For a command, confirm the device and the action in one line when it could surprise someone (starting a mower, for example).",
-      "Send the command, then read the status back and say what the device reports.",
-    ],
-    output:
-      "One or two lines: what you did, the device's reported state, and what happens next. For 'how's it doing', the battery, state and last run.",
-    fallback:
-      "If no device is connected, say so and explain what to connect. Do not pretend to control anything.",
-  }),
-  bot({
     id: "plant-care-log",
     category: "Personal",
     name: "Plant Care Log",
@@ -750,7 +728,7 @@ export const CATALOG_TEMPLATES: BotTemplate[] = [
       "Default every new bot to the least access it needs: read-only, no connectors it does not use.",
     ],
     steps: [
-      "List the user's bots with their title, instructions, connectors and recent activity. Read the instructions, not just the names.",
+      "Get the list of the user's bots with their titles, instructions, connectors and recent activity: read them with your fleet tools if you have them, otherwise ask the user to paste them. Read the instructions, not just the names.",
       "Map each bot to an outcome and a human owner. Mark bots with no owner, no recent use, or overlapping jobs.",
       "Check access: any bot with write access it does not need, or connectors it never uses.",
       "Propose the smallest structure that covers the outcomes: merge, retire, rename, or add one.",

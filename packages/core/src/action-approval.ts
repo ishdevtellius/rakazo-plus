@@ -73,17 +73,82 @@ const MUTATING_CONNECTOR_PATTERN =
   /(^|_)(accept|add|approve|archive|assign|buy|cancel|charge|checkout|close|commit|copy|create|delete|deploy|disable|enable|execute|forward|grant|invite|link|mark|merge|modify|move|patch|pay|post|publish|purchase|put|register|reject|remove|rename|replace|reply|reset|revoke|run|schedule|send|set|share|start|stop|submit|subscribe|trigger|unassign|unlink|unsubscribe|update|upload|upsert|write)(_|$)/i;
 const COMPOUND_CONNECTOR_ACTION_PATTERN = /_(and|or|then)_/i;
 /** Read verbs for the per-bot connector tool policy; wider than the approval gate's list. */
-const POLICY_READ_VERB_PATTERN =
-  /(^|_)(get|list|search|find|read|fetch|retrieve|view|describe|lookup|query|count|check|show)(_|$)/i;
+const POLICY_READ_VERBS: ReadonlySet<string> = new Set([
+  "get",
+  "list",
+  "search",
+  "find",
+  "read",
+  "fetch",
+  "retrieve",
+  "view",
+  "describe",
+  "lookup",
+  "query",
+  "count",
+  "check",
+  "show",
+]);
+
+/** Verbs that change something. Used to spot a write hiding behind a read ("get_or_create"). */
+const POLICY_WRITE_VERBS: ReadonlySet<string> = new Set(
+  (
+    "accept add append apply approve archive assign ban block buy cancel charge checkout clear claim " +
+    "close commit copy create delete deploy disable drop edit enable execute flag follow forward " +
+    "grant import insert invite kill label link lock mark merge modify move mute patch pay pin post " +
+    "publish purchase put react register reject remove rename replace reply reset restart revoke run " +
+    "save schedule send set share star start stop submit subscribe sync tag terminate toggle " +
+    "transfer transition trigger unassign unfollow unlabel unlike unlink unlock unmute unpin " +
+    "unstar unsubscribe untag update upload upsert vote wipe write"
+  ).split(" "),
+);
 
 /**
- * Whether a connector tool name looks like it can change data. Anything that is not clearly a
- * read counts as a write, so an unfamiliar name is blocked rather than waved through.
+ * The part of a tool name that says what it does. Connectors prefix names with where they come
+ * from (`mcp__<server>__<tool>`, `installed__<id>__<tool>`, `group:tool`, `group/tool`,
+ * `connector.TOOL`), and a read verb in that prefix says nothing about the tool.
+ */
+export function connectorToolBaseName(toolName: string): string {
+  const parts = toolName
+    .trim()
+    .split(/__|[:/]/)
+    .filter((part) => part.length > 0);
+  const last = parts.at(-1) ?? toolName.trim();
+  const dot = last.lastIndexOf(".");
+  return dot >= 0 && dot < last.length - 1 ? last.slice(dot + 1) : last;
+}
+
+/** Lower-case words of a tool name: getJiraIssue, GET_ISSUE and get-issue all read "get issue". */
+export function connectorToolWords(toolName: string): string[] {
+  return connectorToolBaseName(toolName)
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .split(/[^A-Za-z0-9]+/)
+    .filter(Boolean)
+    .map((word) => word.toLowerCase());
+}
+
+/** One spelling for a tool, so block and allow lists match however the call reached us. */
+export function canonicalConnectorToolName(toolName: string): string {
+  return connectorToolWords(toolName).join("_");
+}
+
+/**
+ * Whether a connector tool name looks like it can change data. The first action verb decides, so
+ * `GITHUB_GET_A_COMMIT` is a read and `SLACK_SEND_MESSAGE` is a write. A read that is joined to
+ * another action with and/or/then counts as a write when that action changes something, and a name
+ * with no recognisable verb counts as a write: an unfamiliar tool is blocked, not waved through.
  */
 export function isConnectorWriteName(toolName: string): boolean {
-  if (MUTATING_CONNECTOR_PATTERN.test(toolName)) return true;
-  if (COMPOUND_CONNECTOR_ACTION_PATTERN.test(toolName)) return true;
-  return !POLICY_READ_VERB_PATTERN.test(toolName);
+  const words = connectorToolWords(toolName);
+  const index = words.findIndex(
+    (word) => POLICY_READ_VERBS.has(word) || POLICY_WRITE_VERBS.has(word),
+  );
+  if (index === -1) return true;
+  const first = words[index] as string;
+  if (POLICY_WRITE_VERBS.has(first)) return true;
+  const rest = words.slice(index + 1);
+  const joined = rest.findIndex((word) => word === "and" || word === "or" || word === "then");
+  return joined !== -1 && rest.slice(joined + 1).some((word) => POLICY_WRITE_VERBS.has(word));
 }
 
 const EMAIL_CONNECTOR_SLUGS = new Set(["gmail", "outlook", "microsoft_outlook"]);

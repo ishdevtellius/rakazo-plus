@@ -47,7 +47,19 @@ export async function listVaultLogins(prisma: PrismaClient, scope: VaultScope) {
   return rows.map(metadata);
 }
 
-/** Save or replace a login. The site cannot change on a replace: remove it and add it again. */
+/** A concurrent change surfaces as a database error; say what happened instead of a server error. */
+function friendly(error: unknown): never {
+  const code = (error as { code?: unknown } | null)?.code;
+  if (code === "P2002") throw new Error("A login with this name already exists");
+  if (code === "P2025" || code === "P2003") throw new Error("Login not found");
+  throw error;
+}
+
+/**
+ * Save a login. A new name creates it; an existing name is only changed when `replace` is set, so
+ * adding a login can never silently overwrite a working one. The site cannot change on a replace:
+ * remove it and add it again.
+ */
 export async function putVaultLogin(input: {
   prisma: PrismaClient;
   secretStore: SecretStore;
@@ -55,6 +67,7 @@ export async function putVaultLogin(input: {
   name: string;
   origin: string;
   value: string;
+  replace?: boolean;
 }): Promise<VaultLoginMetadata> {
   const { prisma, secretStore, scope } = input;
   // Same rules as a bot's own website login: an HTTPS origin and a username and password pair.
@@ -72,6 +85,9 @@ export async function putVaultLogin(input: {
   const existing = await prisma.vaultLogin.findUnique({
     where: { userId_spaceId_name: { ...scope, name: destination.name } },
   });
+  if (existing && !input.replace) {
+    throw new Error("A login with this name already exists. Use Replace to change it.");
+  }
   if (existing && existing.origin !== origin) {
     throw new Error("Remove the existing login before changing its site");
   }
@@ -90,12 +106,18 @@ export async function putVaultLogin(input: {
     },
     { recordId: id },
   );
-  const row = await prisma.vaultLogin.upsert({
-    where: { userId_spaceId_name: { ...scope, name: destination.name } },
-    create: { id, ...scope, name: destination.name, origin, ciphertext: stored.ciphertext },
-    update: { ciphertext: stored.ciphertext },
-    select,
-  });
+  // By id, not upsert: the secret-persistence wrapper locks and cleans up rows by id.
+  const row = await (existing
+    ? prisma.vaultLogin.update({
+        where: { id: existing.id },
+        data: { ciphertext: stored.ciphertext },
+        select,
+      })
+    : prisma.vaultLogin.create({
+        data: { id, ...scope, name: destination.name, origin, ciphertext: stored.ciphertext },
+        select,
+      })
+  ).catch(friendly);
   if (existing && existing.ciphertext !== stored.ciphertext) {
     await deleteSecretBestEffort(secretStore, existing.ciphertext, existing.id);
   }
@@ -110,11 +132,17 @@ export async function removeVaultLogin(
 ) {
   const row = await prisma.vaultLogin.findFirst({ where: { id, ...scope } });
   if (!row) return;
-  await prisma.vaultLogin.delete({ where: { id: row.id } });
+  await prisma.vaultLogin.delete({ where: { id: row.id } }).catch((error: unknown) => {
+    // Already removed by a concurrent request: the outcome is the same.
+    if ((error as { code?: unknown } | null)?.code !== "P2025") throw error;
+  });
   await deleteSecretBestEffort(secretStore, row.ciphertext, row.id);
 }
 
-/** Replace the set of bots allowed to use one login. Unknown or archived bots are refused. */
+/**
+ * Replace the set of bots allowed to use one login. A bot that is not the owner's is refused; a
+ * bot that has since been archived is dropped from the list instead of blocking every change.
+ */
 export async function setVaultLoginAccess(
   prisma: PrismaClient,
   scope: VaultScope,
@@ -122,20 +150,26 @@ export async function setVaultLoginAccess(
   botIds: string[],
 ): Promise<VaultLoginMetadata> {
   const unique = [...new Set(botIds)];
-  return prisma.$transaction(async (tx) => {
-    const login = await tx.vaultLogin.findFirst({ where: { id, ...scope }, select: { id: true } });
-    if (!login) throw new Error("Login not found");
-    const bots = await tx.bot.findMany({
-      where: { id: { in: unique }, ...scope, archivedAt: null },
-      select: { id: true },
-    });
-    if (bots.length !== unique.length) throw new Error("Bot not found");
-    await tx.botVaultLogin.deleteMany({ where: { vaultLoginId: id } });
-    if (unique.length) {
-      await tx.botVaultLogin.createMany({
-        data: unique.map((botId) => ({ botId, vaultLoginId: id })),
+  return prisma
+    .$transaction(async (tx) => {
+      const login = await tx.vaultLogin.findFirst({
+        where: { id, ...scope },
+        select: { id: true },
       });
-    }
-    return metadata(await tx.vaultLogin.findUniqueOrThrow({ where: { id }, select }));
-  });
+      if (!login) throw new Error("Login not found");
+      const bots = await tx.bot.findMany({
+        where: { id: { in: unique }, ...scope },
+        select: { id: true, archivedAt: true },
+      });
+      if (bots.length !== unique.length) throw new Error("Bot not found");
+      const live = bots.filter((bot) => bot.archivedAt === null).map((bot) => bot.id);
+      await tx.botVaultLogin.deleteMany({ where: { vaultLoginId: id } });
+      if (live.length) {
+        await tx.botVaultLogin.createMany({
+          data: live.map((botId) => ({ botId, vaultLoginId: id })),
+        });
+      }
+      return metadata(await tx.vaultLogin.findUniqueOrThrow({ where: { id }, select }));
+    })
+    .catch(friendly);
 }

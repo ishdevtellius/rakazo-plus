@@ -110,6 +110,8 @@ export const BotSchema = z.object({
   disabledBuiltinTools: z.array(z.string()).default([]),
   /** null = no connector tool policy (the approval gate alone decides). */
   connectorToolPolicy: ConnectorToolPolicySchema.nullable().default(null),
+  /** Where this bot's own computer runs; null follows the deployment default. */
+  computerHost: z.enum(["docker", "this-mac"]).nullable().default(null),
   webhookConfigured: z.boolean(),
   /** Present when created with an idempotency key (e.g. onboarding:first). */
   spawnKey: z.string().nullable(),
@@ -401,6 +403,7 @@ export const UpdateBotInput = z
     fleetManagement: z.boolean().optional(),
     disabledBuiltinTools: DisabledBuiltinToolsSchema.optional(),
     connectorToolPolicy: ConnectorToolPolicySchema.nullable().optional(),
+    computerHost: z.enum(["docker", "this-mac"]).nullable().optional(),
   })
   .superRefine((value, ctx) => {
     const providerProvided = value.modelProvider !== undefined;

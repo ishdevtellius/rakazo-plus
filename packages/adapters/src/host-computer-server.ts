@@ -13,7 +13,7 @@ import {
   hostComputerDeadlineMs,
   hostComputerRequest,
 } from "./host-computer-protocol.js";
-import { skipsHostWorkspaceFile } from "./host-computer-workspace.js";
+
 import { PAGE_BROWSER_NOT_SET_UP, runPageBrowser } from "./host-page-browser.js";
 
 /** No renderer receives the credential. Docker reaches this listener through its host gateway. */
@@ -232,6 +232,11 @@ export async function startHostComputerServer(options: {
         ).toString("base64");
         break;
       case "writeFile":
+        // A restore keeps a file the computer already has, since edits made here are newer.
+        if (input.file.skipExisting && (await provider.fileExists(computer, input.file.path))) {
+          yield null;
+          break;
+        }
         await provider.writeFile(computer, {
           ...input.file,
           content: Buffer.from(input.file.content, "base64"),
@@ -240,8 +245,9 @@ export async function startHostComputerServer(options: {
         break;
       case "exportWorkspace":
         for await (const file of provider.exportWorkspace(computer)) {
-          // A saved copy leaves out caches and files the bridge cannot carry, instead of failing.
-          if (skipsHostWorkspaceFile(file)) continue;
+          // Fail rather than return a partial copy: a saved workspace must never lose a file.
+          if (file.content.byteLength > HOST_COMPUTER_MAX_FILE_BYTES)
+            throw new Error(`computer file exceeds ${HOST_COMPUTER_MAX_FILE_BYTES} bytes`);
           yield { ...file, content: Buffer.from(file.content).toString("base64") };
         }
         break;
@@ -251,6 +257,7 @@ export async function startHostComputerServer(options: {
           // Each step is validated by the driver itself before it touches the page.
           input.request as PageBrowserCommand,
           context.signal,
+          computer.providerRef,
         );
         break;
       case "snapshot":

@@ -40,7 +40,17 @@ export function createRunSandbox(
   return new HostAwareSandbox(
     primary,
     new HostComputerSandbox(opts.hostComputerUrl ?? "", opts.hostComputerToken ?? ""),
-    async () => {
+    async (homeKey) => {
+      // A bot with its own computer can choose where it runs; shared team computers (their home
+      // key starts with "team-") and bots without a choice follow the deployment default.
+      if (homeKey && !homeKey.startsWith("team-")) {
+        const bot = await opts.prisma!.bot.findUnique({
+          where: { id: homeKey },
+          select: { computerHost: true },
+        });
+        if (bot?.computerHost === "this-mac") return true;
+        if (bot?.computerHost === "docker") return false;
+      }
       const settings = await opts.prisma!.deploymentSettings.findUnique({
         where: { id: "default" },
       });
@@ -55,7 +65,7 @@ export class HostAwareSandbox implements SandboxProvider {
   constructor(
     private readonly isolated: SandboxProvider,
     private readonly host: SandboxProvider,
-    private readonly hostEnabled: () => Promise<boolean>,
+    private readonly hostEnabled: (homeKey?: string) => Promise<boolean>,
   ) {
     if (isolated.pageBrowser || host.pageBrowser) {
       this.pageBrowser = (computer, request, context) => {
@@ -80,8 +90,8 @@ export class HostAwareSandbox implements SandboxProvider {
     return computer.kind === "desktop" ? this.host : this.isolated;
   }
 
-  async provisionKind() {
-    const provider = (await this.hostEnabled()) ? this.host : this.isolated;
+  async provisionKind(homeKey?: string) {
+    const provider = (await this.hostEnabled(homeKey)) ? this.host : this.isolated;
     return provider.describe().id as ComputerRef["kind"];
   }
 
@@ -94,7 +104,7 @@ export class HostAwareSandbox implements SandboxProvider {
     },
     context: AdapterContext,
   ) {
-    const provider = (await this.hostEnabled()) ? this.host : this.isolated;
+    const provider = (await this.hostEnabled(request.botId)) ? this.host : this.isolated;
     const providerKind = provider.describe().id;
     return provider.provision(
       {
@@ -106,7 +116,7 @@ export class HostAwareSandbox implements SandboxProvider {
   }
 
   async isRunning(computer: ComputerRef, context: AdapterContext): Promise<boolean> {
-    const provider = (await this.hostEnabled()) ? this.host : this.isolated;
+    const provider = (await this.hostEnabled(computer.botId)) ? this.host : this.isolated;
     if (provider.describe().id !== computer.kind) return false;
     return provider.isRunning?.(computer, context) ?? false;
   }
@@ -125,7 +135,7 @@ export class HostAwareSandbox implements SandboxProvider {
     request: CommandRequest,
     context: AdapterContext,
   ): AsyncIterable<ProcessEvent> {
-    if (computer.kind === "desktop" && !(await this.hostEnabled()))
+    if (computer.kind === "desktop" && !(await this.hostEnabled(computer.botId)))
       throw new Error("Local computer access is disabled");
     yield* this.route(computer).execute(computer, request, context);
   }

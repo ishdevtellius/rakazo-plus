@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -22,7 +23,8 @@ const echo = `
 import { readFileSync } from "node:fs";
 const args = JSON.parse(readFileSync(0, "utf8"));
 console.log(JSON.stringify({ ok: true, command: process.argv[2], port: process.env.RAKAZO_CDP_PORT,
-  stdinMode: process.env.RAKAZO_BROWSER_ARGS_STDIN, args, url: args.url ?? "", title: "t" }));
+  stdinMode: process.env.RAKAZO_BROWSER_ARGS_STDIN, hidden: process.env.RAKAZO_ATTACH_SINGLE_HIDDEN_PAGE,
+  args, url: args.url ?? "", title: "t" }));
 `;
 
 describe("host page browser", () => {
@@ -38,6 +40,7 @@ describe("host page browser", () => {
       command: "navigate",
       port: "9333",
       stdinMode: "1",
+      hidden: "1",
       args: { url: "https://example.com" },
     });
   });
@@ -99,5 +102,48 @@ describe("host page browser", () => {
         request: { command: "evaluate", code: "1" },
       }).success,
     ).toBe(false);
+  });
+
+  it("survives a helper that exits before reading its arguments", async () => {
+    const config = await driver("process.exit(0);");
+    const big = { command: "act", actions: [{ text: "x".repeat(200_000) }] } as never;
+    await expect(runPageBrowser(config, big, new AbortController().signal)).rejects.toThrow(
+      "returned no result",
+    );
+    // The agent is still alive and can run the next command.
+    const ok = await driver(echo);
+    expect(
+      await runPageBrowser(ok, { command: "snapshot" }, new AbortController().signal),
+    ).toMatchObject({
+      ok: true,
+    });
+  });
+
+  it("runs page commands one at a time, since all bots share one browser", async () => {
+    const dir = await mkdtemp(path.join(tmpdir(), "page-browser-order-"));
+    dirs.push(dir);
+    const log = path.join(dir, "order.log");
+    const config = await driver(`
+import { appendFileSync, readFileSync } from "node:fs";
+JSON.parse(readFileSync(0, "utf8"));
+appendFileSync(${JSON.stringify(log)}, "start\\n");
+await new Promise((resolve) => setTimeout(resolve, 60));
+appendFileSync(${JSON.stringify(log)}, "end\\n");
+console.log(JSON.stringify({ ok: true }));
+`);
+    const signal = new AbortController().signal;
+    await Promise.all([
+      runPageBrowser(config, { command: "snapshot" }, signal),
+      runPageBrowser(config, { command: "snapshot" }, signal),
+    ]);
+    expect(readFileSync(log, "utf8").trim().split("\n")).toEqual(["start", "end", "start", "end"]);
+  });
+
+  it("refuses a page action larger than the helper can read", async () => {
+    const config = await driver(echo);
+    const huge = { command: "act", actions: [{ text: "x".repeat(1_100_000) }] } as never;
+    await expect(runPageBrowser(config, huge, new AbortController().signal)).rejects.toThrow(
+      "too large",
+    );
   });
 });

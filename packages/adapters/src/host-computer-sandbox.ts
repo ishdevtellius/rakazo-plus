@@ -40,13 +40,29 @@ export class HostComputerSandbox implements SandboxProvider {
     const body = JSON.stringify({ ...input, runId: context.runId });
     if (Buffer.byteLength(body) > HOST_COMPUTER_MAX_BYTES)
       throw new Error("Local computer request is too large");
-    const response = await fetch(new URL("/computer", this.url), {
-      method: "POST",
-      headers: { authorization: `Bearer ${this.token}`, "content-type": "application/json" },
-      body,
-      signal: AbortSignal.any([context.signal, AbortSignal.timeout(hostComputerDeadlineMs(input))]),
-      redirect: "error",
-    });
+    // The agent answers 429 before it touches the request when it is busy, so asking again is safe.
+    let response: Response | undefined;
+    for (let attempt = 0; attempt < 6; attempt += 1) {
+      response = await fetch(new URL("/computer", this.url), {
+        method: "POST",
+        headers: { authorization: `Bearer ${this.token}`, "content-type": "application/json" },
+        body,
+        signal: AbortSignal.any([
+          context.signal,
+          AbortSignal.timeout(hostComputerDeadlineMs(input)),
+        ]),
+        redirect: "error",
+      });
+      if (response.status !== 429) break;
+      await response.body?.cancel();
+      await new Promise((resolve) => setTimeout(resolve, 200 * 2 ** attempt));
+      context.signal.throwIfAborted();
+    }
+    if (!response) throw new Error("Local computer unavailable");
+    if (response.status === 429) {
+      await response.body?.cancel();
+      throw new Error("The local computer is busy. Try again in a moment.");
+    }
     if (!response.ok || !response.body) {
       await response.body?.cancel();
       throw new Error(
@@ -187,7 +203,22 @@ export class HostComputerSandbox implements SandboxProvider {
     files: AsyncIterable<PortableFile>,
     context: AdapterContext,
   ) {
-    await importHostWorkspace(files, (file) => this.writeFile(computer, file, context));
+    // A restore never overwrites what the Mac already has: edits made there are newer than the
+    // saved copy from before the computer was moved.
+    await importHostWorkspace(files, (file) =>
+      this.one(
+        {
+          method: "writeFile",
+          botId: computer.botId,
+          file: {
+            ...file,
+            content: Buffer.from(file.content).toString("base64"),
+            skipExisting: true,
+          },
+        },
+        context,
+      ).then(() => undefined),
+    );
   }
   /** The page browser on the user's own machine: a Chrome the owner started with a debug port. */
   pageBrowser(computer: ComputerRef, request: PageBrowserCommand, context: AdapterContext) {

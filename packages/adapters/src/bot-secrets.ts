@@ -455,6 +455,7 @@ async function grantedVaultLogins(prisma: PrismaClient, scope: BotSecretScope) {
       vaultLogin: { userId: scope.userId, spaceId: scope.spaceId },
     },
     select: { vaultLogin: { select: { id: true, name: true, origin: true, ciphertext: true } } },
+    orderBy: { vaultLogin: { name: "asc" } },
     take: 100,
   });
   return rows.map((row) => row.vaultLogin);

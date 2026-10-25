@@ -91,6 +91,12 @@ msgstr "{0} rollup hours"
 msgid "{0} runs · {1} tokens"
 msgstr "{0} runs · {1} tokens"
 
+#. placeholder {0}: addedWithoutRoutine.bot.name
+#. placeholder {1}: addedWithoutRoutine.message
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "{0} was added, but its routine could not be created: {1}. You can add the routine from the bot's own page."
+msgstr "{0} was added, but its routine could not be created: {1}. You can add the routine from the bot's own page."
+
 #. placeholder {0}: bot.name
 #: src/pages/ExternalConversationSettings.tsx
 msgid "{0} will still respond to direct mentions."
@@ -397,6 +403,11 @@ msgstr "Activity"
 #: src/pages/ScratchpadSection.tsx
 msgid "Add"
 msgstr "Add"
+
+#. placeholder {0}: template.name
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "Add {0}"
+msgstr "Add {0}"
 
 #. placeholder {0}: bot.name
 #: src/pages/GroupPanel.tsx
@@ -1434,6 +1445,10 @@ msgstr "Connect OAuth"
 msgid "Connect Treg"
 msgstr "Connect Treg"
 
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "connected"
+msgstr "connected"
+
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/McpOAuthCallback.tsx
 #: src/pages/MemorySettingsOverlay.tsx
@@ -2290,6 +2305,7 @@ msgid "Docker"
 msgstr "Docker"
 
 #: src/pages/ComputerHostSettingsPanel.tsx
+#: src/pages/shell/bot-panel.tsx
 msgid "Docker computer"
 msgstr "Docker computer"
 
@@ -2609,6 +2625,14 @@ msgstr "Flag unexpected actions"
 #: src/pages/shell/bot-panel.tsx
 msgid "Fleet management"
 msgstr "Fleet management"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Follow the default (Docker computer)"
+msgstr "Follow the default (Docker computer)"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Follow the default (This Mac)"
+msgstr "Follow the default (This Mac)"
 
 #: src/pages/Auth.tsx
 msgid "Forgot password?"
@@ -3592,6 +3616,10 @@ msgstr "None yet"
 msgid "Normal"
 msgstr "Normal"
 
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "not connected"
+msgstr "not connected"
+
 #: src/pages/ModelBackupsSettings.tsx
 msgid "Not connected"
 msgstr "Not connected"
@@ -3654,6 +3682,10 @@ msgstr "on the 1st at {0}"
 msgid "Only empty spaces can be deleted. Delete its bots and groups first."
 msgstr "Only empty spaces can be deleted. Delete its bots and groups first."
 
+#: src/pages/ComputerHostSettingsPanel.tsx
+msgid "Only the first part of a bot's saved files comes along (up to 512 MB), and logins stored inside the Docker computer, such as GitHub access, are not there. Bots that work from repository clones should stay on Docker. Bots on your Mac share one sandbox folder and can see each other's files, and files made there are not included when you export a bot."
+msgstr "Only the first part of a bot's saved files comes along (up to 512 MB), and logins stored inside the Docker computer, such as GitHub access, are not there. Bots that work from repository clones should stay on Docker. Bots on your Mac share one sandbox folder and can see each other's files, and files made there are not included when you export a bot."
+
 #: src/components/markdown-link-prompt.tsx
 #: src/pages/ScratchpadSection.tsx
 #: src/pages/Shell.tsx
@@ -3701,6 +3733,10 @@ msgstr "Open in full window"
 #: src/pages/Shell.tsx
 msgid "Open navigation"
 msgstr "Open navigation"
+
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "Open the bot"
+msgstr "Open the bot"
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Open work"
@@ -4876,6 +4912,10 @@ msgstr "System"
 msgid "Take control"
 msgstr "Take control"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Takes effect the next time this bot's computer starts. Moving to your Mac brings over up to 512 MB of its files, but not logins kept inside the Docker computer (such as GitHub). Your old computer stays untouched, so you can move back. Bots on your Mac share one sandbox folder and can see each other's files, and files made there are not included when you export a bot."
+msgstr "Takes effect the next time this bot's computer starts. Moving to your Mac brings over up to 512 MB of its files, but not logins kept inside the Docker computer (such as GitHub). Your old computer stays untouched, so you can move back. Bots on your Mac share one sandbox folder and can see each other's files, and files made there are not included when you export a bot."
+
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Teach a task"
 msgstr "Teach a task"
@@ -4924,6 +4964,10 @@ msgstr "Test sign-in"
 msgid "Testing…"
 msgstr "Testing…"
 
+#: src/pages/Shell.tsx
+msgid "That folder could not be read."
+msgstr "That folder could not be read."
+
 #: src/components/SoftwareUpdateSection.tsx
 msgid "The API did not come back. Refresh this page."
 msgstr "The API did not come back. Refresh this page."
@@ -4935,6 +4979,10 @@ msgstr "The connection timed out."
 #: src/pages/Shell.tsx
 msgid "The folder has no files that can be attached."
 msgstr "The folder has no files that can be attached."
+
+#: src/pages/Shell.tsx
+msgid "The folder is too large to attach."
+msgstr "The folder is too large to attach."
 
 #. js-lingui-explicit-id
 #: src/lib/run-error.ts
@@ -4973,6 +5021,10 @@ msgstr "This applies to every bot. Switching does not delete anything, and you c
 msgid "This bot runs on this computer, not a Linux desktop. Shell and files use your home folder."
 msgstr "This bot runs on this computer, not a Linux desktop. Shell and files use your home folder."
 
+#: src/pages/shell/bot-panel.tsx
+msgid "This bot shares the Team Computer, so it runs wherever the default says (Settings, Where bots run). Give it a dedicated computer to choose separately."
+msgstr "This bot shares the Team Computer, so it runs wherever the default says (Settings, Where bots run). Give it a dedicated computer to choose separately."
+
 #: src/components/call/IncomingCall.tsx
 msgid "This call is no longer ringing."
 msgstr "This call is no longer ringing."
@@ -5007,6 +5059,7 @@ msgid "this Mac"
 msgstr "this Mac"
 
 #: src/pages/ComputerHostSettingsPanel.tsx
+#: src/pages/shell/bot-panel.tsx
 msgid "This Mac"
 msgstr "This Mac"
 
@@ -5478,6 +5531,10 @@ msgstr "Where bots run"
 #: src/pages/HostComputerPrompt.tsx
 msgid "Where should bots run?"
 msgstr "Where should bots run?"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Where this bot runs"
+msgstr "Where this bot runs"
 
 #: src/lib/ticket-status.ts
 msgid "Won't do"

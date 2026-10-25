@@ -431,6 +431,8 @@ model Bot {
   thinkingLevel     String?
   disabledBuiltinTools String[] @default([])
   connectorToolPolicy Json?
+  /// Where this bot's own computer runs: "docker" or "this-mac"; null follows the deployment default.
+  computerHost String?
   webhookSecretId   String?
   teamChatAmbientEnabled Boolean @default(false)
   teamChatRules          String  @default("")

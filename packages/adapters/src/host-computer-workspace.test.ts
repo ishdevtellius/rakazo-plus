@@ -61,4 +61,25 @@ describe("host computer workspace restore", () => {
     );
     expect(counted).toEqual(["a", "b"]);
   });
+
+  it("writes several files at once and still reports a failed write", async () => {
+    let running = 0;
+    let peak = 0;
+    const slow = async () => {
+      running += 1;
+      peak = Math.max(peak, running);
+      await new Promise((resolve) => setTimeout(resolve, 5));
+      running -= 1;
+    };
+    const files = Array.from({ length: 24 }, (_, index) => file(`f${index}`));
+    const result = await importHostWorkspace(stream(files), slow);
+    expect(result.imported).toBe(24);
+    expect(peak).toBeGreaterThan(1);
+    expect(peak).toBeLessThanOrEqual(8);
+    await expect(
+      importHostWorkspace(stream(files), async (item) => {
+        if (item.path === "f3") throw new Error("disk full");
+      }),
+    ).rejects.toThrow("disk full");
+  });
 });

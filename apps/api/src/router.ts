@@ -674,6 +674,7 @@ const BOT_SECRET_INPUT_ERRORS = [
   "Vault logins can only be used",
   "Remove the existing login",
   "Login limit reached",
+  "A login with this name already exists",
   "Login not found",
   "Bot not found",
 ];
@@ -1784,7 +1785,26 @@ export function createRouter(deps: RouterDeps) {
         return { ok: true as const };
       }),
       update: authed.bots.update.handler(async ({ context, input }) => {
+        // Where a bot's computer runs is the owner's decision, including going back to the default.
+        if (input.computerHost !== undefined) {
+          if (!context.actor.isDeploymentOwner) throw new ORPCError("FORBIDDEN");
+          if (input.computerHost === "this-mac" && deps.env.sandboxProvider !== "docker") {
+            throw new ORPCError("BAD_REQUEST", {
+              message: "This Mac mode is only available when SANDBOX_PROVIDER=docker.",
+            });
+          }
+        }
         const existing = await repos.getBot(context.actor, input.botId);
+        // A bot on the shared team computer has no computer of its own to place.
+        if (
+          input.computerHost !== undefined &&
+          input.computerHost !== null &&
+          existing.computer?.scope !== "dedicated"
+        ) {
+          throw new ORPCError("BAD_REQUEST", {
+            message: "Only a bot with its own computer can choose where it runs.",
+          });
+        }
         if (input.sectionId) {
           const section = await deps.prisma.botSection.findFirst({
             where: {
@@ -1861,6 +1881,7 @@ export function createRouter(deps: RouterDeps) {
                     (input.connectorToolPolicy as Prisma.InputJsonValue | null) ?? Prisma.DbNull,
                 }
               : {}),
+            ...(input.computerHost !== undefined ? { computerHost: input.computerHost } : {}),
           },
         }).catch((error) => {
           if (!(error instanceof InstructionConflictError)) throw error;
@@ -6040,6 +6061,7 @@ export function createRouter(deps: RouterDeps) {
             name: input.name,
             origin: input.origin,
             value: input.value,
+            replace: input.replace,
           });
         } catch (error) {
           throw mapBotSecretStoreError(error);

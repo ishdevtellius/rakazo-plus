@@ -17,6 +17,7 @@ async function cleanupUnreferenced(
       if (
         (await prisma.secret.count({ where: { ciphertext: row.ciphertext } })) ||
         (await prisma.botSecret.count({ where: { ciphertext: row.ciphertext } })) ||
+        (await prisma.vaultLogin.count({ where: { ciphertext: row.ciphertext } })) ||
         (await prisma.integrationProviderConfig.count({
           where: { ciphertext: row.ciphertext },
         }))
@@ -59,6 +60,7 @@ type Mutation = {
 const secretTables = {
   Secret: "secrets",
   BotSecret: "bot_secrets",
+  VaultLogin: "vault_logins",
   IntegrationProviderConfig: "integration_provider_configs",
 };
 const parentTables = { User: "user", Space: "spaces", Bot: "bots", Organization: "organization" };
@@ -147,7 +149,10 @@ export function withSecretPersistence(prisma: PrismaClient, store: SecretStore):
       });
       filter = { spaceId: { in: spaces.map((row) => row.id) } };
     }
-    if (model !== "Bot") state.old.push(...(await lockedRows(state, "Secret", filter)));
+    if (model !== "Bot") {
+      state.old.push(...(await lockedRows(state, "Secret", filter)));
+      state.old.push(...(await lockedRows(state, "VaultLogin", filter)));
+    }
     state.old.push(...(await lockedRows(state, "BotSecret", filter)));
   }
   const extended = prisma.$extends({

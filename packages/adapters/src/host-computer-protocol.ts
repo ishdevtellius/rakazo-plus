@@ -7,6 +7,8 @@ const file = z.object({
   path: z.string().max(4096),
   content: z.string().max(HOST_COMPUTER_MAX_BYTES),
   executable: z.boolean().optional(),
+  /** A restore keeps a file the computer already has instead of writing the saved copy over it. */
+  skipExisting: z.boolean().optional(),
 });
 const command = z.object({
   argv: z

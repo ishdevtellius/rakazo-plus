@@ -114,6 +114,7 @@ function bot(description = "Billing", overrides: Partial<Bot> = {}): Bot {
     fleetManagement: false,
     disabledBuiltinTools: [],
     connectorToolPolicy: null,
+    computerHost: null,
     webhookConfigured: false,
     spawnKey: null,
     ...overrides,

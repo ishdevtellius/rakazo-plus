@@ -20,9 +20,24 @@ import {
 import { rpc } from "../lib/rpc";
 import { errorText } from "../lib/user-error";
 
+/** The pinned model is only used when its provider is connected; otherwise every run would fail. */
+function usableModel(
+  template: BotTemplate,
+  credentials: ReadonlyArray<{ provider: string; hasKey: boolean }>,
+) {
+  const model = template.model;
+  if (!model) return null;
+  return credentials.some((item) => item.provider === model.provider && item.hasKey) ? model : null;
+}
+
 /** Create the bot with its real instructions, model and policy in one call, then its
  * routine (switched off: the user turns it on after connecting the apps). */
 export async function installBotTemplate(template: BotTemplate, existingNames: readonly string[]) {
+  const [credentials, me] = await Promise.all([
+    rpc.models.credentials().catch(() => []),
+    rpc.me().catch(() => null),
+  ]);
+  const model = usableModel(template, credentials);
   const bot = await rpc.bots.create({
     name: uniqueBotName(template.name, existingNames),
     title: template.title,
@@ -30,19 +45,22 @@ export async function installBotTemplate(template: BotTemplate, existingNames: r
     instructions: template.instructions,
     notifyOnFinish: true,
     computerMode: template.computerMode,
-    modelProvider: template.model?.provider ?? null,
-    modelId: template.model?.modelId ?? null,
+    modelProvider: model?.provider ?? null,
+    modelId: model?.modelId ?? null,
     connectorToolPolicy: template.connectorToolPolicy,
   });
   let routineError: string | null = null;
   if (template.routine) {
+    // A schedule means the user's own morning, so use their timezone, not the template author's.
+    const timezone =
+      me?.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone || template.routine.timezone;
     await rpc.routines
       .create({
         botId: bot.id,
         name: template.routine.name,
         prompt: template.routine.prompt,
         crons: template.routine.crons,
-        timezone: template.routine.timezone,
+        timezone,
         notify: true,
         active: false,
       })
@@ -55,8 +73,19 @@ export async function installBotTemplate(template: BotTemplate, existingNames: r
 
 const SECTION_PREVIEW = 4;
 
+const APP_LABELS: Record<string, string> = {
+  googlecalendar: "Google Calendar",
+  googledrive: "Google Drive",
+  googlesheets: "Google Sheets",
+  googleslides: "Google Slides",
+  googlesearchconsole: "Google Search Console",
+  hubspot: "HubSpot",
+  github: "GitHub",
+  gmail: "Gmail",
+};
+
 function appLabel(slug: string) {
-  return slug.replace(/^google/, "Google ").replace(/^\w/, (letter) => letter.toUpperCase());
+  return APP_LABELS[slug] ?? slug.replace(/^\w/, (letter) => letter.toUpperCase());
 }
 
 function TemplateCard({
@@ -94,6 +123,7 @@ function TemplateCard({
           type="button"
           size="sm"
           data-testid={`add-template-${template.id}`}
+          aria-label={t`Add ${template.name}`}
           disabled={busyId !== null}
           onClick={() => onAdd(template)}
         >
@@ -129,13 +159,13 @@ function TemplateCard({
   );
 }
 
-function writesLabel(template: BotTemplate) {
+function writesLabel(template: BotTemplate, t: (parts: TemplateStringsArray) => string) {
   const mode = template.connectorToolPolicy.writes;
   return mode === "block"
-    ? "Read-only: changes to connected apps are blocked"
+    ? t`Read-only: changes to connected apps are blocked`
     : mode === "ask"
-      ? "Asks you before every change to a connected app"
-      : "Changes allowed with normal approvals";
+      ? t`Asks you before every change to a connected app`
+      : t`Changes allowed with normal approvals`;
 }
 
 function TemplateDetail({
@@ -176,6 +206,7 @@ function TemplateDetail({
         <Button
           type="button"
           data-testid={`detail-add-${template.id}`}
+          aria-label={t`Add ${template.name}`}
           disabled={busyId !== null}
           onClick={() => onAdd(template)}
         >
@@ -188,7 +219,7 @@ function TemplateDetail({
           <dt className="text-muted-foreground">
             <Trans>Access</Trans>
           </dt>
-          <dd className="text-foreground">{writesLabel(template)}</dd>
+          <dd className="text-foreground">{writesLabel(template, t)}</dd>
         </div>
         <div>
           <dt className="text-muted-foreground">
@@ -205,7 +236,7 @@ function TemplateDetail({
               ? template.connectors
                   .map(
                     (slug) =>
-                      `${appLabel(slug)}${connected.has(slug) ? " ✓ connected" : " (not connected)"}`,
+                      `${appLabel(slug)}${connected.has(slug) ? ` ✓ ${t`connected`}` : ` (${t`not connected`})`}`,
                   )
                   .join(", ")
               : t`No apps`}
@@ -259,6 +290,10 @@ export function BotTemplatesOverlay({
   const [selected, setSelected] = useState<BotTemplate | null>(null);
   const [query, setQuery] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
+  const [addedWithoutRoutine, setAddedWithoutRoutine] = useState<{
+    bot: Bot;
+    message: string;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [connected, setConnected] = useState<ReadonlySet<string>>(new Set());
 
@@ -316,6 +351,12 @@ export function BotTemplatesOverlay({
     setError(null);
     try {
       const { bot, routineError } = await installBotTemplate(template, existingNames);
+      if (routineError) {
+        // Added, but not as promised: say so before moving on, instead of hiding it.
+        setAddedWithoutRoutine({ bot, message: routineError });
+        setBusyId(null);
+        return;
+      }
       onInstalled(bot, routineError);
     } catch (caught) {
       setError(errorText(caught));
@@ -332,7 +373,8 @@ export function BotTemplatesOverlay({
     <Dialog
       open
       onOpenChange={(open) => {
-        if (!open) onClose();
+        // Closing while the bot is being created would leave it created with nothing to show for it.
+        if (!open && busyId === null) onClose();
       }}
     >
       <DialogContent
@@ -350,6 +392,27 @@ export function BotTemplatesOverlay({
             <X />
           </DialogClose>
         </DialogHeader>
+        {addedWithoutRoutine ? (
+          <div
+            role="alert"
+            data-testid="template-routine-failed"
+            className="mx-8 mt-4 flex items-center gap-3 rounded-lg border border-border bg-muted/40 p-3 text-[13px]"
+          >
+            <span className="flex-1">
+              <Trans>
+                {addedWithoutRoutine.bot.name} was added, but its routine could not be created:{" "}
+                {addedWithoutRoutine.message}. You can add the routine from the bot's own page.
+              </Trans>
+            </span>
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => onInstalled(addedWithoutRoutine.bot, addedWithoutRoutine.message)}
+            >
+              <Trans>Open the bot</Trans>
+            </Button>
+          </div>
+        ) : null}
         {selected ? (
           <>
             {error ? (

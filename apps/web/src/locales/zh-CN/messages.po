@@ -91,6 +91,12 @@ msgstr ""
 msgid "{0} runs · {1} tokens"
 msgstr "{0} 次运行 · {1} tokens"
 
+#. placeholder {0}: addedWithoutRoutine.bot.name
+#. placeholder {1}: addedWithoutRoutine.message
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "{0} was added, but its routine could not be created: {1}. You can add the routine from the bot's own page."
+msgstr ""
+
 #. placeholder {0}: bot.name
 #: src/pages/ExternalConversationSettings.tsx
 msgid "{0} will still respond to direct mentions."
@@ -397,6 +403,11 @@ msgstr "动态"
 #: src/pages/ScratchpadSection.tsx
 msgid "Add"
 msgstr "添加"
+
+#. placeholder {0}: template.name
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "Add {0}"
+msgstr ""
 
 #. placeholder {0}: bot.name
 #: src/pages/GroupPanel.tsx
@@ -1434,6 +1445,10 @@ msgstr "连接 OAuth"
 msgid "Connect Treg"
 msgstr "连接 Treg"
 
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "connected"
+msgstr ""
+
 #: src/components/integrations/IntegrationSetup.tsx
 #: src/pages/McpOAuthCallback.tsx
 #: src/pages/MemorySettingsOverlay.tsx
@@ -2290,6 +2305,7 @@ msgid "Docker"
 msgstr "Docker"
 
 #: src/pages/ComputerHostSettingsPanel.tsx
+#: src/pages/shell/bot-panel.tsx
 msgid "Docker computer"
 msgstr ""
 
@@ -2608,6 +2624,14 @@ msgstr "标记异常操作"
 
 #: src/pages/shell/bot-panel.tsx
 msgid "Fleet management"
+msgstr ""
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Follow the default (Docker computer)"
+msgstr ""
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Follow the default (This Mac)"
 msgstr ""
 
 #: src/pages/Auth.tsx
@@ -3592,6 +3616,10 @@ msgstr "暂无"
 msgid "Normal"
 msgstr ""
 
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "not connected"
+msgstr ""
+
 #: src/pages/ModelBackupsSettings.tsx
 msgid "Not connected"
 msgstr "未连接"
@@ -3654,6 +3682,10 @@ msgstr "每月 1 日 {0}"
 msgid "Only empty spaces can be deleted. Delete its bots and groups first."
 msgstr ""
 
+#: src/pages/ComputerHostSettingsPanel.tsx
+msgid "Only the first part of a bot's saved files comes along (up to 512 MB), and logins stored inside the Docker computer, such as GitHub access, are not there. Bots that work from repository clones should stay on Docker. Bots on your Mac share one sandbox folder and can see each other's files, and files made there are not included when you export a bot."
+msgstr ""
+
 #: src/components/markdown-link-prompt.tsx
 #: src/pages/ScratchpadSection.tsx
 #: src/pages/Shell.tsx
@@ -3701,6 +3733,10 @@ msgstr "在完整窗口中打开"
 #: src/pages/Shell.tsx
 msgid "Open navigation"
 msgstr "打开导航"
+
+#: src/pages/BotTemplatesOverlay.tsx
+msgid "Open the bot"
+msgstr ""
 
 #: src/pages/ScratchpadSection.tsx
 msgid "Open work"
@@ -4876,6 +4912,10 @@ msgstr "系统"
 msgid "Take control"
 msgstr "接管控制权"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "Takes effect the next time this bot's computer starts. Moving to your Mac brings over up to 512 MB of its files, but not logins kept inside the Docker computer (such as GitHub). Your old computer stays untouched, so you can move back. Bots on your Mac share one sandbox folder and can see each other's files, and files made there are not included when you export a bot."
+msgstr ""
+
 #: src/components/teach/TeachComputerOverlay.tsx
 msgid "Teach a task"
 msgstr "示范任务"
@@ -4924,6 +4964,10 @@ msgstr "测试登录"
 msgid "Testing…"
 msgstr "正在测试…"
 
+#: src/pages/Shell.tsx
+msgid "That folder could not be read."
+msgstr ""
+
 #: src/components/SoftwareUpdateSection.tsx
 msgid "The API did not come back. Refresh this page."
 msgstr "API 未恢复。请刷新此页面。"
@@ -4934,6 +4978,10 @@ msgstr "连接超时。"
 
 #: src/pages/Shell.tsx
 msgid "The folder has no files that can be attached."
+msgstr ""
+
+#: src/pages/Shell.tsx
+msgid "The folder is too large to attach."
 msgstr ""
 
 #. js-lingui-explicit-id
@@ -4973,6 +5021,10 @@ msgstr ""
 msgid "This bot runs on this computer, not a Linux desktop. Shell and files use your home folder."
 msgstr "此 Bot 运行在这台电脑上，而不是 Linux 桌面。Shell 和文件使用你的主目录。"
 
+#: src/pages/shell/bot-panel.tsx
+msgid "This bot shares the Team Computer, so it runs wherever the default says (Settings, Where bots run). Give it a dedicated computer to choose separately."
+msgstr ""
+
 #: src/components/call/IncomingCall.tsx
 msgid "This call is no longer ringing."
 msgstr ""
@@ -5007,6 +5059,7 @@ msgid "this Mac"
 msgstr "这台 Mac"
 
 #: src/pages/ComputerHostSettingsPanel.tsx
+#: src/pages/shell/bot-panel.tsx
 msgid "This Mac"
 msgstr ""
 
@@ -5478,6 +5531,10 @@ msgstr ""
 #: src/pages/HostComputerPrompt.tsx
 msgid "Where should bots run?"
 msgstr "Bot 应在哪里运行？"
+
+#: src/pages/shell/bot-panel.tsx
+msgid "Where this bot runs"
+msgstr ""
 
 #: src/lib/ticket-status.ts
 msgid "Won't do"

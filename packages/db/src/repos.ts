@@ -96,6 +96,7 @@ function mapBot(
     fleetManagement?: boolean;
     disabledBuiltinTools?: string[];
     connectorToolPolicy?: unknown;
+    computerHost?: string | null;
     webhookSecretId?: string | null;
     spawnKey?: string | null;
   },
@@ -142,6 +143,8 @@ function mapBot(
     fleetManagement: bot.fleetManagement ?? false,
     disabledBuiltinTools: bot.disabledBuiltinTools ?? [],
     connectorToolPolicy: parseConnectorToolPolicy(bot.connectorToolPolicy),
+    computerHost:
+      bot.computerHost === "docker" || bot.computerHost === "this-mac" ? bot.computerHost : null,
     webhookConfigured: Boolean(bot.webhookSecretId),
     spawnKey: bot.spawnKey ?? null,
     incomingCall,

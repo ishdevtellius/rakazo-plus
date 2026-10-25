@@ -45,7 +45,7 @@ export function VaultSettingsPanel() {
     setPassword("");
   }
 
-  async function save(loginName: string, loginOrigin: string) {
+  async function save(loginName: string, loginOrigin: string, replace: boolean) {
     if (busy) return false;
     const user = username.trim();
     const secret = password;
@@ -61,6 +61,7 @@ export function VaultSettingsPanel() {
         name: loginName,
         origin: loginOrigin,
         value: encodeLoginSecret({ username: user, password: secret }),
+        replace,
       });
       await refresh();
       return true;
@@ -73,7 +74,7 @@ export function VaultSettingsPanel() {
   }
 
   async function submitAdd() {
-    if (await save(name.trim(), origin.trim())) {
+    if (await save(name.trim(), origin.trim(), false)) {
       setAdding(false);
       setName("");
       setOrigin("");
@@ -197,6 +198,7 @@ export function VaultSettingsPanel() {
                   variant="outline"
                   onClick={() => {
                     clearProtectedFields();
+                    setAdding(false);
                     setReplacing(replacing === login.id ? null : login.id);
                   }}
                 >
@@ -245,7 +247,7 @@ export function VaultSettingsPanel() {
                     size="sm"
                     disabled={busy || !username.trim() || !password}
                     onClick={async () => {
-                      if (await save(login.name, login.origin)) setReplacing(null);
+                      if (await save(login.name, login.origin, true)) setReplacing(null);
                     }}
                   >
                     <Trans>Save new login</Trans>
@@ -350,7 +352,12 @@ export function VaultSettingsPanel() {
           size="sm"
           className="mt-4"
           data-testid="vault-add"
-          onClick={() => setAdding(true)}
+          onClick={() => {
+            // One pair of fields serves both forms, so never carry one form's text into the other.
+            clearProtectedFields();
+            setReplacing(null);
+            setAdding(true);
+          }}
         >
           <Trans>Add login</Trans>
         </Button>

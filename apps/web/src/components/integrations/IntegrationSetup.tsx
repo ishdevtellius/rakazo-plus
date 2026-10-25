@@ -130,6 +130,11 @@ export function IntegrationSetup({
         result = await connectMcpOauth(server.id);
       } catch (err) {
         if (err instanceof Error && err.message === NO_ONE_CLICK_SIGNIN_MESSAGE) {
+          // Another provider's client id must never be offered for this one.
+          if (ownApp?.serverId !== server.id) {
+            setOwnClientId("");
+            setOwnClientSecret("");
+          }
           setOwnApp({ serverId: server.id, name, url });
           throw err;
         }
@@ -159,6 +164,7 @@ export function IntegrationSetup({
       setConnected((current) => [...current, ownApp.url]);
       onServerConnected?.(ownApp.serverId);
       setOwnApp(null);
+      setOwnClientId("");
       setOwnClientSecret("");
     });
   }

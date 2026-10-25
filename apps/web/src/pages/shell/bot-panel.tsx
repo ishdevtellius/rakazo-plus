@@ -230,6 +230,7 @@ export function BotSettings({
     thinkingLevel?: ThinkingLevel | null;
     disabledBuiltinTools?: string[];
     connectorToolPolicy?: ConnectorToolPolicy | null;
+    computerHost?: "docker" | "this-mac" | null;
   }) => Promise<void>;
   onExport: () => Promise<void>;
   onClear: () => void;
@@ -257,7 +258,16 @@ export function BotSettings({
   const [connectorPolicy, setConnectorPolicy] = useState<ConnectorToolPolicy | null>(
     bot.connectorToolPolicy ?? null,
   );
-  useEffect(() => setConnectorPolicy(bot.connectorToolPolicy ?? null), [bot.connectorToolPolicy]);
+  useEffect(() => {
+    // A roster refresh must not undo a toggle whose save is still on its way.
+    if (pendingSavesRef.current === 0) setConnectorPolicy(bot.connectorToolPolicy ?? null);
+  }, [bot.connectorToolPolicy]);
+  const [computerHost, setComputerHost] = useState<"docker" | "this-mac" | null>(
+    bot.computerHost ?? null,
+  );
+  useEffect(() => {
+    if (pendingSavesRef.current === 0) setComputerHost(bot.computerHost ?? null);
+  }, [bot.computerHost]);
   const [allowToolDraft, setAllowToolDraft] = useState("");
   const [blockToolDraft, setBlockToolDraft] = useState("");
   const hasConnectorPolicy = connectorPolicy !== null;
@@ -379,12 +389,17 @@ export function BotSettings({
     notifyOnFinish?: boolean;
     fleetManagement?: boolean;
     connectorToolPolicy?: ConnectorToolPolicy | null;
+    computerHost?: "docker" | "this-mac" | null;
     disabledBuiltinTools?: string[];
     baseDisabledBuiltinTools?: string[];
   }) {
     try {
       setSaving(true);
       setError(null);
+      if (patchOverrides?.computerHost !== undefined) {
+        await onSave({ computerHost: patchOverrides.computerHost });
+        return;
+      }
       if (patchOverrides?.fleetManagement !== undefined) {
         await onSave({ fleetManagement: patchOverrides.fleetManagement });
         return;
@@ -471,6 +486,10 @@ export function BotSettings({
     } catch (err) {
       if (patchOverrides?.fleetManagement !== undefined)
         setFleetManagement(!patchOverrides.fleetManagement);
+      // A choice that did not save must not keep showing as if it had: go back to what is saved.
+      if (patchOverrides?.connectorToolPolicy !== undefined)
+        setConnectorPolicy(bot.connectorToolPolicy ?? null);
+      if (patchOverrides?.computerHost !== undefined) setComputerHost(bot.computerHost ?? null);
       setError(errorText(err, t`Could not save`));
     } finally {
       pendingSavesRef.current -= 1;
@@ -497,18 +516,22 @@ export function BotSettings({
     void enqueueSave({ disabledBuiltinTools: next });
   }
 
+  const toolAppRequestRef = useRef(0);
   async function chooseToolApp(provider: string) {
+    const request = ++toolAppRequestRef.current;
     setToolApp(provider);
     setAppTools(null);
     setToolFilter("");
     if (!provider) return;
     setAppToolsLoading(true);
     try {
-      setAppTools(await rpc.connections.toolkitTools({ provider }));
+      const tools = await rpc.connections.toolkitTools({ provider });
+      // A slower answer for an app the user has already left must not replace the current list.
+      if (request === toolAppRequestRef.current) setAppTools(tools);
     } catch {
-      setAppTools([]);
+      if (request === toolAppRequestRef.current) setAppTools([]);
     } finally {
-      setAppToolsLoading(false);
+      if (request === toolAppRequestRef.current) setAppToolsLoading(false);
     }
   }
 
@@ -563,6 +586,7 @@ export function BotSettings({
     notifyOnFinish?: boolean;
     fleetManagement?: boolean;
     connectorToolPolicy?: ConnectorToolPolicy | null;
+    computerHost?: "docker" | "this-mac" | null;
     disabledBuiltinTools?: string[];
   }) {
     // Serialize full-object auto-saves so an older in-flight request cannot
@@ -671,6 +695,50 @@ export function BotSettings({
         </summary>
         <InstructionSettings key={bot.id} bot={bot} />
         <ComputerModePicker value={computerMode} onChange={setComputerMode} />
+        {me?.canChooseHostComputer ? (
+          <div data-testid="bot-computer-host" className={fieldLabelClass}>
+            {computerMode === "dedicated" ? (
+              <label htmlFor={`${ids}-computer-host`}>
+                <Trans>Where this bot runs</Trans>
+                <NativeSelect
+                  id={`${ids}-computer-host`}
+                  data-testid="bot-computer-host-select"
+                  className="mt-2 w-full"
+                  value={computerHost ?? ""}
+                  onChange={(event) => {
+                    const next = (event.target.value || null) as "docker" | "this-mac" | null;
+                    setComputerHost(next);
+                    void enqueueSave({ computerHost: next });
+                  }}
+                >
+                  <NativeSelectOption value="">
+                    {me.computerHost === "this-mac"
+                      ? t`Follow the default (This Mac)`
+                      : t`Follow the default (Docker computer)`}
+                  </NativeSelectOption>
+                  <NativeSelectOption value="docker">{t`Docker computer`}</NativeSelectOption>
+                  <NativeSelectOption value="this-mac">{t`This Mac`}</NativeSelectOption>
+                </NativeSelect>
+                <span className="mt-1 block text-[12px] text-muted-foreground/70">
+                  <Trans>
+                    Takes effect the next time this bot's computer starts. Moving to your Mac brings
+                    over up to 512 MB of its files, but not logins kept inside the Docker computer
+                    (such as GitHub). Your old computer stays untouched, so you can move back. Bots
+                    on your Mac share one sandbox folder and can see each other's files, and files
+                    made there are not included when you export a bot.
+                  </Trans>
+                </span>
+              </label>
+            ) : (
+              <span className="block text-[12px] text-muted-foreground/70">
+                <Trans>
+                  This bot shares the Team Computer, so it runs wherever the default says (Settings,
+                  Where bots run). Give it a dedicated computer to choose separately.
+                </Trans>
+              </span>
+            )}
+          </div>
+        ) : null}
         <ErrorBoundary fallback={<SectionLoadFailed />}>
           <Suspense fallback={null}>
             <ScratchpadSection botId={bot.id} />

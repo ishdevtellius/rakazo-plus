@@ -805,6 +805,7 @@ describe("MCP prepared credential updates", () => {
           [...rows.values()].filter((row) => row.ciphertext === where.ciphertext).length,
       },
       botSecret: { count: async () => 0 },
+      vaultLogin: { count: async () => 0 },
       integrationProviderConfig: { count: async () => 0 },
       $executeRaw: async () => 1,
       $queryRaw: async () => [],
@@ -5703,5 +5704,31 @@ describe("routine watch creation boundaries", () => {
     );
     expect(create).not.toHaveBeenCalled();
     expect(update).not.toHaveBeenCalled();
+  });
+});
+
+describe("where a bot's computer runs", () => {
+  function clientFor(isDeploymentOwner: boolean) {
+    const deps = {
+      prisma: {} as unknown as PrismaClient,
+      env: { sandboxProvider: "docker" },
+      dataDir: "/tmp/rakazo-router-test",
+    } as unknown as RouterDeps;
+    const actor = {
+      spaceId: "workspace-1",
+      userId: "user-1",
+      email: "user@rakazo.test",
+      isDeploymentOwner,
+    } satisfies Actor;
+    return createRouterClient(createRouter(deps), { context: { actor } });
+  }
+
+  it("lets only the deployment owner change it, including back to the default", async () => {
+    const client = clientFor(false);
+    for (const computerHost of ["this-mac", "docker", null] as const) {
+      await expect(client.bots.update({ botId: "bot-1", computerHost })).rejects.toMatchObject({
+        code: "FORBIDDEN",
+      });
+    }
   });
 });

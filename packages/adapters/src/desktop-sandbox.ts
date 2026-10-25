@@ -354,6 +354,19 @@ export class DesktopSandboxProvider implements SandboxProvider {
     return new Uint8Array(await readFile(target));
   }
 
+  /** Whether a path already exists in the computer's workspace (used to keep files on a restore). */
+  async fileExists(computer: ComputerRef, filePath: string): Promise<boolean> {
+    const box = this.requiredBox(computer);
+    try {
+      await stat(await localWorkspaceTarget(box.home, filePath, true));
+      return true;
+    } catch (error) {
+      const code = (error as { code?: unknown } | null)?.code;
+      if (code === "ENOENT" || code === "ENOTDIR") return false;
+      throw error;
+    }
+  }
+
   async writeFile(computer: ComputerRef, file: PortableFile) {
     const box = this.requiredBox(computer);
     const target = await localWorkspaceTarget(box.home, file.path, false);

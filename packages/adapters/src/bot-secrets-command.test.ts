@@ -71,6 +71,9 @@ function fakeDatabase() {
   const client: Record<string, unknown> = {
     botSecret,
     secret: { count: vi.fn(async () => 0) },
+    vaultLogin: { count: vi.fn(async () => 0) },
+    // No shared vault logins are granted in these tests.
+    botVaultLogin: { findMany: vi.fn(async () => []) },
     integrationProviderConfig: { count: vi.fn(async () => 0) },
     $queryRaw: vi.fn(async () => []),
   };

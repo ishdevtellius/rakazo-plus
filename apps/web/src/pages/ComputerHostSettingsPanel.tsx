@@ -126,6 +126,15 @@ export function ComputerHostSettingsPanel() {
                     start-chrome.sh).
                   </Trans>
                 </p>
+                <p className="mt-1 text-[12px] text-muted-foreground">
+                  <Trans>
+                    Only the first part of a bot's saved files comes along (up to 512 MB), and
+                    logins stored inside the Docker computer, such as GitHub access, are not there.
+                    Bots that work from repository clones should stay on Docker. Bots on your Mac
+                    share one sandbox folder and can see each other's files, and files made there
+                    are not included when you export a bot.
+                  </Trans>
+                </p>
               </div>
               {!onMac && !confirming ? (
                 <Button

@@ -314,6 +314,8 @@ export function parseAuthConfigs(raw: string | undefined): Record<string, string
       ),
     );
   } catch {
+    // Say it once instead of looking like a missing setting; the value itself may hold secrets.
+    getLogger().warn("COMPOSIO_AUTH_CONFIGS is not valid JSON and was ignored");
     return {};
   }
 }
@@ -451,6 +453,10 @@ export class ComposioConnector implements ComposioProvider {
     );
   }
 
+  private readonly toolkitToolLookups = new Map<
+    string,
+    Promise<Array<{ slug: string; name: string; description: string }>>
+  >();
   private readonly toolkitToolCache = new Map<
     string,
     { at: number; tools: Array<{ slug: string; name: string; description: string }> }
@@ -462,18 +468,31 @@ export class ComposioConnector implements ComposioProvider {
     toolkit: string,
   ): Promise<Array<{ slug: string; name: string; description: string }>> {
     const key = toolkit.trim().toLowerCase();
-    if (!key) return [];
+    if (!key || key.length > 64 || !/^[a-z0-9_-]+$/.test(key)) return [];
     const cached = this.toolkitToolCache.get(key);
     if (cached && Date.now() - cached.at < 10 * 60_000) return cached.tools;
-    const raw = await this.sdk().tools.getRawComposioTools({ toolkits: [key], limit: 1000 });
-    const tools = (Array.isArray(raw) ? raw : []).map((tool) => ({
-      slug: tool.slug,
-      name: tool.name,
-      description: (tool.description ?? "").slice(0, 300),
-    }));
-    tools.sort((left, right) => left.slug.localeCompare(right.slug));
-    this.toolkitToolCache.set(key, { at: Date.now(), tools });
-    return tools;
+    // One lookup per app at a time: a burst of identical requests shares a single call.
+    const running = this.toolkitToolLookups.get(key);
+    if (running) return running;
+    const lookup = (async () => {
+      const raw = await this.sdk().tools.getRawComposioTools({ toolkits: [key], limit: 1000 });
+      const tools = (Array.isArray(raw) ? raw : []).map((tool) => ({
+        slug: tool.slug,
+        name: tool.name,
+        description: (tool.description ?? "").slice(0, 300),
+      }));
+      tools.sort((left, right) => left.slug.localeCompare(right.slug));
+      this.toolkitToolCache.set(key, { at: Date.now(), tools });
+      // Bounded: the oldest entry makes room, so a stream of odd names cannot grow it forever.
+      while (this.toolkitToolCache.size > 64) {
+        const oldest = this.toolkitToolCache.keys().next().value;
+        if (oldest === undefined) break;
+        this.toolkitToolCache.delete(oldest);
+      }
+      return tools;
+    })().finally(() => this.toolkitToolLookups.delete(key));
+    this.toolkitToolLookups.set(key, lookup);
+    return lookup;
   }
 
   async warmDirectory(): Promise<void> {

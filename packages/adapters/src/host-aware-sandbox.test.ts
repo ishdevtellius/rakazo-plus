@@ -32,6 +32,7 @@ describe("host-aware sandbox", () => {
     const sandbox = createRunSandbox("docker", {
       prisma: {
         deploymentSettings: { findUnique: vi.fn(async () => ({ computerHost: "this-mac" })) },
+        bot: { findUnique: vi.fn(async () => null) },
       } as unknown as PrismaClient,
     });
     await expect(sandbox.provision({ botId: "host", homePath: "/unused" }, ctx)).rejects.toThrow(
@@ -232,5 +233,42 @@ describe("host-aware sandbox", () => {
       { computerId: computer.id, request: { command: "snapshot" }, aborted: false },
     ]);
     await sandbox.destroy(computer, ctx);
+  });
+
+  describe("per-bot computer host", () => {
+    function sandboxWith(deployment: string | null, bots: Record<string, string | null>) {
+      const prisma = {
+        deploymentSettings: { findUnique: vi.fn(async () => ({ computerHost: deployment })) },
+        bot: {
+          findUnique: vi.fn(async ({ where }: { where: { id: string } }) =>
+            where.id in bots ? { computerHost: bots[where.id] } : null,
+          ),
+        },
+      } as unknown as PrismaClient;
+      return { prisma, sandbox: createRunSandbox("docker", { prisma }) as HostAwareSandbox };
+    }
+
+    it("lets a bot with its own computer run on this machine while the default is Docker", async () => {
+      const { sandbox } = sandboxWith("docker", { "bot-a": "this-mac", "bot-b": null });
+      expect(await sandbox.provisionKind("bot-a")).toBe("desktop");
+      expect(await sandbox.provisionKind("bot-b")).toBe("docker");
+    });
+
+    it("lets a bot stay on Docker while the default is this machine", async () => {
+      const { sandbox } = sandboxWith("this-mac", { "bot-a": "docker", "bot-b": null });
+      expect(await sandbox.provisionKind("bot-a")).toBe("docker");
+      expect(await sandbox.provisionKind("bot-b")).toBe("desktop");
+    });
+
+    it("makes the shared team computer follow the default, whatever a bot says", async () => {
+      const { sandbox, prisma } = sandboxWith("docker", { "team-space": "this-mac" });
+      expect(await sandbox.provisionKind("team-space")).toBe("docker");
+      expect(prisma.bot.findUnique).not.toHaveBeenCalled();
+    });
+
+    it("treats an unknown bot like one without a choice", async () => {
+      const { sandbox } = sandboxWith("this-mac", {});
+      expect(await sandbox.provisionKind("ghost")).toBe("desktop");
+    });
   });
 });

@@ -1287,6 +1287,76 @@ describe("computer provisioning", () => {
     },
   );
 
+  it.each([
+    ["moves to another host", "desktop", true],
+    ["stays on the same host", "docker", false],
+  ] as const)(
+    "stops the old computer only when a bot %s",
+    async (_name, wantedKind, shouldStop) => {
+      const dataDir = await mkdtemp(path.join(tmpdir(), "rakazo-host-move-"));
+      const ref = {
+        id: "provider-2",
+        botId: "bot-1",
+        kind: wantedKind,
+        providerRef: "provider-2",
+        fresh: true,
+      };
+      const prisma = {
+        computer: {
+          findUniqueOrThrow: vi.fn().mockResolvedValue({
+            id: "computer-1",
+            homeKey: "bot-1",
+            providerRef: "provider-1",
+            kind: "docker",
+            scope: "dedicated",
+            state: "running",
+            controlLeaseId: null,
+            updatedAt: new Date("2024-01-01T00:00:00.000Z"),
+          }),
+          updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+          update: vi.fn(),
+        },
+      } as unknown as PrismaClient;
+      const stop = vi.fn().mockResolvedValue(undefined);
+      const sandbox = {
+        provisionKind: vi.fn().mockResolvedValue(wantedKind),
+        provision: vi.fn().mockResolvedValue(ref),
+        prepare: vi.fn().mockResolvedValue(undefined),
+        importWorkspace: vi.fn().mockResolvedValue(undefined),
+        destroy: vi.fn(),
+        stop,
+      } as unknown as SandboxProvider;
+      try {
+        await provisionComputer(
+          {
+            prisma,
+            sandbox,
+            home: {
+              exportHome: vi.fn().mockReturnValue((async function* () {})()),
+            } as unknown as AgentHomeStore,
+            jobs: {} as JobPublisher,
+            events: {} as ThreadEvents,
+            dataDir,
+          },
+          "computer-1",
+          context,
+        );
+        if (shouldStop) {
+          expect(stop).toHaveBeenCalledWith(
+            expect.objectContaining({ kind: "docker", providerRef: "provider-1", botId: "bot-1" }),
+            context,
+          );
+        } else {
+          expect(stop).not.toHaveBeenCalled();
+        }
+        // The host a bot is asked about is its own computer's home key.
+        expect(sandbox.provisionKind).toHaveBeenCalledWith("bot-1");
+      } finally {
+        await rm(dataDir, { recursive: true, force: true });
+      }
+    },
+  );
+
   it("restores the workspace and records the new reference when reconnect replaces the sandbox", async () => {
     const dataDir = await mkdtemp(path.join(tmpdir(), "rakazo-reconnect-replacement-"));
     const ref = {

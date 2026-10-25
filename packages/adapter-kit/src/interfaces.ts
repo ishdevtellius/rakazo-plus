@@ -124,7 +124,7 @@ export interface SandboxProvider {
    * The kind provision() would return now, without starting anything. Only providers that
    * choose between kinds at provision time implement it.
    */
-  provisionKind?(): Promise<ComputerRef["kind"]>;
+  provisionKind?(homeKey?: string): Promise<ComputerRef["kind"]>;
   /** Read-only probe: true only when this exact reference is already running. */
   isRunning?(computer: ComputerRef, context: AdapterContext): Promise<boolean>;
   /** Perform idempotent provider setup after the lifecycle has captured the reference. */
